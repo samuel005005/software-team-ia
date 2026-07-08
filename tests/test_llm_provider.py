@@ -77,6 +77,18 @@ class MockLLMProviderTestCase(unittest.TestCase):
         self.assertEqual(len(parsed["tasks"]), 2)
         self.assertEqual(parsed["tasks"][0]["title"], "Configurar proyecto Flutter")
 
+    def test_returns_structured_developer_code_response(self) -> None:
+        request = LLMRequest(
+            system_prompt="Eres un Flutter Developer experto en generación de proyectos.",
+            user_prompt="Genera los archivos del proyecto Flutter en formato JSON.\n\nProyecto: barberia-app",
+        )
+        response = self.provider.generate(request)
+        parsed = json.loads(response.content)
+
+        self.assertIn("files", parsed)
+        paths = {file_data["path"] for file_data in parsed["files"]}
+        self.assertEqual(paths, {"pubspec.yaml", "lib/main.dart", "README.md"})
+
     def test_returns_structured_qa_response(self) -> None:
         request = LLMRequest(
             system_prompt="Eres un QA Engineer experto en aseguramiento de calidad.",

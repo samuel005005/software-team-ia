@@ -1,9 +1,17 @@
 import json
+import re
 import time
 
+from artifacts.developer_fallback import (
+    build_main_dart_content,
+    build_pubspec_content,
+    build_readme_content,
+    pubspec_name,
+)
 from llm.base_provider import LLMProvider
 from llm.llm_request import LLMRequest
 from llm.llm_response import LLMResponse
+from state.project_state import ProjectState
 
 
 class MockLLMProvider(LLMProvider):
@@ -85,7 +93,10 @@ class MockLLMProvider(LLMProvider):
                 indent=2,
             )
 
-        if "flutter developer" in system or "genera tareas" in user:
+        if "genera los archivos del proyecto flutter" in user:
+            return self._build_developer_code_content(request)
+
+        if "genera tareas" in user:
             return json.dumps(
                 {
                     "tasks": [
@@ -147,6 +158,66 @@ class MockLLMProvider(LLMProvider):
             ensure_ascii=False,
             indent=2,
         )
+
+    def _build_developer_code_content(self, request: LLMRequest) -> str:
+        project_slug = self._extract_project_name(request.user_prompt) or "barberia-app"
+        package_name = pubspec_name(project_slug)
+        tasks = [
+            {
+                "id": 1,
+                "title": "Configurar proyecto Flutter",
+                "description": "Crear carpetas lib/core, lib/features y lib/shared con Clean Architecture",
+                "status": "pending",
+            },
+            {
+                "id": 2,
+                "title": "Implementar autenticación JWT",
+                "description": "Registro, inicio de sesión y Secure Storage en el cliente",
+                "status": "pending",
+            },
+        ]
+        state = ProjectState(
+            project_name=project_slug,
+            description="Crear una aplicación móvil para administrar una barbería",
+            architecture="Frontend: Flutter + Riverpod | Backend: FastAPI | DB: PostgreSQL",
+        )
+
+        return json.dumps(
+            {
+                "files": [
+                    {
+                        "path": "pubspec.yaml",
+                        "language": "yaml",
+                        "description": "Manifiesto del proyecto Flutter",
+                        "content": build_pubspec_content(
+                            pubspec_name=package_name,
+                            description=state.description or "Flutter Hello World",
+                        ),
+                    },
+                    {
+                        "path": "lib/main.dart",
+                        "language": "dart",
+                        "description": "Punto de entrada Flutter Hello World",
+                        "content": build_main_dart_content(pubspec_name=package_name),
+                    },
+                    {
+                        "path": "README.md",
+                        "language": "markdown",
+                        "description": "Resumen del resultado generado por el Developer",
+                        "content": build_readme_content(state, tasks),
+                    },
+                ]
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+
+    @staticmethod
+    def _extract_project_name(user_prompt: str) -> str | None:
+        match = re.search(r"Proyecto:\s*(\S+)", user_prompt)
+        if match is None:
+            return None
+        return match.group(1).strip()
 
     def _estimate_tokens(self, *texts: str) -> int:
         combined = " ".join(text for text in texts if text)

@@ -38,11 +38,25 @@ LLM_PROVIDER=mock python3 main.py
 Con un proveedor real:
 
 ```bash
-export LLM_PROVIDER=openai   # openai | claude | gemini | mock
-export LLM_MODEL=gpt-4o-mini   # opcional
+# OpenAI
+export LLM_PROVIDER=openai
 export OPENAI_API_KEY=sk-...
+export LLM_MODEL=gpt-4o-mini   # opcional
+python3 main.py
+
+# Claude
+export LLM_PROVIDER=claude
+export ANTHROPIC_API_KEY=sk-ant-...
+python3 main.py
+
+# Gemini
+export LLM_PROVIDER=gemini
+export GOOGLE_API_KEY=...
+# o export GEMINI_API_KEY=...
 python3 main.py
 ```
+
+La salida incluye el proveedor activo, la fuente del plan (`planner_llm`) y la fuente de artefactos del Developer (`developer_llm` cuando la respuesta JSON es válida).
 
 ### Variables de entorno
 
@@ -54,6 +68,7 @@ python3 main.py
 | `OPENAI_API_KEY` | API key de OpenAI | — |
 | `ANTHROPIC_API_KEY` | API key de Anthropic | — |
 | `GOOGLE_API_KEY` | API key de Google Gemini | — |
+| `GEMINI_API_KEY` | Alias de `GOOGLE_API_KEY` | — |
 
 ## Tests
 
@@ -170,6 +185,7 @@ La demo imprime:
 - Software Design Document
 - Arquitectura
 - Tareas de desarrollo
+- Artefactos generados y su fuente (`developer_llm` / `developer_fallback`)
 - Reporte QA
 - Execution history
 - Logs de ejecución

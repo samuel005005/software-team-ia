@@ -1,4 +1,6 @@
+import os
 import unittest
+from unittest.mock import patch
 
 from llm.base_provider import LLMProvider
 from llm.llm_config import LLMConfig
@@ -92,6 +94,7 @@ class ProviderFactoryTestCase(unittest.TestCase):
 
         self.assertIn("api_key", str(ctx.exception))
 
+    @patch.dict(os.environ, {"LLM_PROVIDER": "mock"}, clear=False)
     def test_workflow_uses_factory_by_default(self) -> None:
         agents = get_software_creation_agents()
 

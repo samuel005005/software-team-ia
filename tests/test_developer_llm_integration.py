@@ -102,8 +102,14 @@ class DeveloperLLMIntegrationTestCase(unittest.TestCase):
     def test_logs_indicate_llm_pipeline(self) -> None:
         result = self.developer.execute(self.state)
 
-        self.assertTrue(any("pipeline LLM" in log for log in result.logs))
+        self.assertTrue(any("pipeline LLM de tareas" in log for log in result.logs))
+        self.assertTrue(any("pipeline LLM de código" in log for log in result.logs))
         self.assertTrue(any("via LLM" in log for log in result.logs))
+
+    def test_developer_artifact_source_is_llm_with_mock_provider(self) -> None:
+        self.developer.execute(self.state)
+
+        self.assertEqual(self.developer.last_artifact_source, "developer_llm")
 
     def test_full_orchestrator_with_migrated_developer(self) -> None:
         agents = get_software_creation_agents()

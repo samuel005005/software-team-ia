@@ -46,6 +46,7 @@ class ProviderFactory:
 
     @staticmethod
     def from_config(config: LLMConfig) -> LLMProvider:
+        config.validate()
         return ProviderFactory.create(
             config.provider_name,
             **config.to_factory_kwargs(),

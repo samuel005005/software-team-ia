@@ -4,14 +4,7 @@
 Crear una aplicación móvil para administrar una barbería
 
 ## Arquitectura
-Frontend:
-Flutter + Riverpod
-
-Backend:
-FastAPI
-
-Database:
-PostgreSQL
+Frontend: Flutter + Riverpod | Backend: FastAPI | DB: PostgreSQL
 
 ## Tareas generadas
 - [1] Configurar proyecto Flutter (pending)

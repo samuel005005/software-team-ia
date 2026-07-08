@@ -107,6 +107,32 @@ class LLMConfigTestCase(unittest.TestCase):
 
         self.assertNotIn("api_key", kwargs)
 
+    def test_from_env_reads_gemini_api_key_alias(self) -> None:
+        config = LLMConfig.from_env({"GEMINI_API_KEY": "gemini-test-key"})
+
+        self.assertEqual(config.google_api_key, "gemini-test-key")
+
+    def test_validate_allows_mock_without_api_key(self) -> None:
+        LLMConfig(provider_name="mock").validate()
+
+    def test_validate_requires_openai_api_key(self) -> None:
+        with self.assertRaises(ValueError) as ctx:
+            LLMConfig(provider_name="openai").validate()
+
+        self.assertIn("OPENAI_API_KEY", str(ctx.exception))
+
+    def test_validate_requires_claude_api_key(self) -> None:
+        with self.assertRaises(ValueError) as ctx:
+            LLMConfig(provider_name="claude").validate()
+
+        self.assertIn("ANTHROPIC_API_KEY", str(ctx.exception))
+
+    def test_validate_requires_gemini_api_key(self) -> None:
+        with self.assertRaises(ValueError) as ctx:
+            LLMConfig(provider_name="gemini").validate()
+
+        self.assertIn("GOOGLE_API_KEY", str(ctx.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -22,7 +22,7 @@ class LLMConfig:
         fixed_duration_ms = int(env.get("LLM_FIXED_DURATION_MS", "5"))
         openai_api_key = env.get("OPENAI_API_KEY") or None
         anthropic_api_key = env.get("ANTHROPIC_API_KEY") or None
-        google_api_key = env.get("GOOGLE_API_KEY") or None
+        google_api_key = env.get("GOOGLE_API_KEY") or env.get("GEMINI_API_KEY") or None
 
         return cls(
             provider_name=provider_name,
@@ -44,3 +44,25 @@ class LLMConfig:
         elif self.provider_name == "gemini" and self.google_api_key:
             kwargs["api_key"] = self.google_api_key
         return kwargs
+
+    def required_api_key_env_var(self) -> str | None:
+        env_vars = {
+            "openai": "OPENAI_API_KEY",
+            "claude": "ANTHROPIC_API_KEY",
+            "gemini": "GOOGLE_API_KEY",
+        }
+        return env_vars.get(self.provider_name)
+
+    def validate(self) -> None:
+        """Valida que la configuración pueda instanciar el proveedor seleccionado."""
+        if self.provider_name == "mock":
+            return
+
+        api_key = self.to_factory_kwargs().get("api_key")
+        if api_key:
+            return
+
+        env_var = self.required_api_key_env_var() or "API_KEY"
+        raise ValueError(
+            f"LLM_PROVIDER={self.provider_name} requiere la variable de entorno {env_var}"
+        )

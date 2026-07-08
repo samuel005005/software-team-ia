@@ -6,7 +6,7 @@ from workspace.workspace import Workspace, WorkspaceError
 
 
 class ReadFileTool(Tool):
-    """Lee el contenido de un archivo de texto."""
+    """Lee el contenido de un archivo de texto dentro del workspace."""
 
     def __init__(self, workspace: Workspace) -> None:
         self._workspace = workspace
@@ -26,15 +26,23 @@ class ReadFileTool(Tool):
 
         try:
             target = self._workspace.resolve(path)
+            if not target.exists():
+                return ToolResult.failure_result(f"El archivo no existe: {path}")
             if not target.is_file():
                 return ToolResult.failure_result(f"No es un archivo: {path}")
+
             content = target.read_text(encoding="utf-8")
+            relative_path = str(target.relative_to(self._workspace.root))
         except WorkspaceError as exc:
             return ToolResult.failure_result(str(exc))
         except OSError as exc:
             return ToolResult.failure_result(str(exc))
 
         return ToolResult.success_result(
-            output={"path": str(target), "content": content},
+            output={
+                "path": relative_path,
+                "content": content,
+                "size": target.stat().st_size,
+            },
             metadata={"operation": "read_file"},
         )
