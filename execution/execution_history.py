@@ -17,3 +17,9 @@ class ExecutionHistory:
         if not self._records:
             return None
         return self._records[-1]
+
+    def discard_from(self, index: int) -> None:
+        """Elimina registros desde el índice indicado."""
+        if index < 0:
+            return
+        self._records = self._records[:index]

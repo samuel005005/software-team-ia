@@ -27,7 +27,7 @@ class BaseAgent(ABC):
 
     @property
     def last_result(self) -> AgentResult | None:
-        """Último resultado estructurado producido por execute()."""
+        """Último resultado estructurado producido por execute(); entrada de QualityPipeline."""
         return self._last_result
 
     @property

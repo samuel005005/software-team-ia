@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any
 
 
 class ExecutionStatus:
@@ -28,6 +29,7 @@ class ExecutionRecord:
     status: str = ExecutionStatus.RUNNING
     errors: list[str] = field(default_factory=list)
     duration_ms: int | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if self.finished_at is not None and self.duration_ms is None:
