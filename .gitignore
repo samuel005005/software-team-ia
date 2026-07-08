@@ -1,31 +1,41 @@
 .venv
+venv/
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.development
-.env.test
-.env.production
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.*
+!.env.example
 .pytest_cache
 .ruff_cache
+.mypy_cache
+.coverage
+htmlcov/
 .vscode
 .idea
-.pytest_cache
-.ruff_cache
-.vscode
-.idea
-.pytest_cache
-.ruff_cache
-.vscode
-.idea
-# Python cache
 __pycache__/
 *.py[cod]
 *$py.class
+*.egg-info/
+.DS_Store
+Thumbs.db
+*.log
 
+# Flutter (proyectos bajo projects/)
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+coverage/
+
+# Proyectos generados (contenido, no la carpeta)
 projects/*
+
+# Mantener ejemplo
+!projects/barberia-app/
+!projects/barberia-app/**
+!projects/barberia-api/
+!projects/barberia-api/**
+
+# Factory metadata por proyecto
+projects/*/.factory/

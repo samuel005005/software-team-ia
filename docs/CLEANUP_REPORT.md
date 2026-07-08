@@ -48,7 +48,7 @@
 
 ### Directorios completos (18)
 
-```
+```text
 actions/
 agents/
 artifacts/
@@ -73,14 +73,14 @@ workspace/
 
 ### Archivos sueltos (2)
 
-```
+```text
 main.py
 requirements.txt
 ```
 
 ### Archivos parciales previos (reemplazados)
 
-```
+```text
 .cursor/rules/*.mdc   → reemplazados por .md según especificación
 ```
 
@@ -90,7 +90,7 @@ requirements.txt
 
 ## 3. Nueva estructura
 
-```
+```text
 software-team-ai/
 ├── .cursor/rules/          # Roles de la fábrica
 │   ├── product_manager.md
@@ -123,7 +123,7 @@ software-team-ai/
 
 ## 4. Commit de respaldo
 
-Commit creado antes de la limpieza con tag/mensaje:
+Commit creado antes de la limpieza con mensaje:
 `backup: estado completo del framework Python antes de migración Cursor`
 
 Para recuperar el framework anterior:

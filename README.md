@@ -1,197 +1,69 @@
-# software-team-ai
+# Software Factory — Cursor AI Team
 
-Agent Harness en Python que transforma un objetivo de software en artefactos estructurados mediante un equipo de agentes orquestados con LLM.
+Repositorio de **fábrica de software** para desarrollo asistido por IA con Cursor. No incluye framework de agentes en Python: usa **Agent Mode**, **Rules** y **Skills**.
 
-El flujo por defecto toma una descripción de proyecto (por ejemplo, una app móvil para una barbería) y produce historias de usuario, arquitectura, tareas de desarrollo, acciones de filesystem y un reporte QA.
+## Metodología
 
-## Características
+- **Spec-Driven Development (SDD)**
+- **Clean Architecture** y **SOLID**
+- **Design Patterns** cuando aporten valor
+- Desarrollo incremental por tareas
+- Revisiones de calidad (QA, Review, Security)
 
-- **Multi-provider LLM**: `mock`, `openai`, `claude`, `gemini`
-- **Pipeline LLM por agente**: prompt → provider → parser → `ProjectState`
-- **Agent Registry**: registro desacoplado de agentes, capacidades y factories
-- **Planner dinámico**: plan de ejecución generado por LLM con fallback determinista
-- **Execution Graph + Policy**: grafo de nodos con política de recorrido
-- **Tools y acciones**: filesystem, terminal y acciones ejecutables post-developer
-- **Reviewer y Quality** (standalone): revisión y evaluación de calidad reutilizables, aún no integrados al workflow principal
-
-## Requisitos
-
-- Python 3.10+
-- Dependencias en `requirements.txt`
-
-## Instalación
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-## Ejecución
-
-Con el proveedor simulado (sin APIs externas):
-
-```bash
-LLM_PROVIDER=mock python3 main.py
-```
-
-Con un proveedor real:
-
-```bash
-# OpenAI
-export LLM_PROVIDER=openai
-export OPENAI_API_KEY=sk-...
-export LLM_MODEL=gpt-4o-mini   # opcional
-python3 main.py
-
-# Claude
-export LLM_PROVIDER=claude
-export ANTHROPIC_API_KEY=sk-ant-...
-python3 main.py
-
-# Gemini
-export LLM_PROVIDER=gemini
-export GOOGLE_API_KEY=...
-# o export GEMINI_API_KEY=...
-python3 main.py
-```
-
-La salida incluye el proveedor activo, la fuente del plan (`planner_llm`) y la fuente de artefactos del Developer (`developer_llm` cuando la respuesta JSON es válida).
-
-### Variables de entorno
-
-| Variable | Descripción | Default |
-|---|---|---|
-| `LLM_PROVIDER` | Proveedor LLM (`mock`, `openai`, `claude`, `gemini`) | `mock` |
-| `LLM_MODEL` | Modelo a usar | depende del provider |
-| `LLM_FIXED_DURATION_MS` | Duración mínima simulada del mock | `5` |
-| `OPENAI_API_KEY` | API key de OpenAI | — |
-| `ANTHROPIC_API_KEY` | API key de Anthropic | — |
-| `GOOGLE_API_KEY` | API key de Google Gemini | — |
-| `GEMINI_API_KEY` | Alias de `GOOGLE_API_KEY` | — |
-
-## Tests
-
-```bash
-python3 -m pytest
-```
-
-## Arquitectura
-
-```mermaid
-flowchart LR
-    PS[ProjectState] --> CB[ContextBuilder]
-    CB --> AC[AgentContext]
-    AC --> PB[PromptBuilder]
-    PB --> LR[LLMRequest]
-    LR --> LP[LLMProvider]
-    LP --> LRes[LLMResponse]
-    LRes --> RP[ResponseParser]
-    RP --> AG[BaseAgent]
-    AG --> PS
-
-    WF[Workflow] --> PL[PlannerAgent]
-    PL --> EG[ExecutionGraph]
-    EG --> OR[Orchestrator]
-    OR --> AG
-```
-
-### Flujo de creación de software
-
-1. **PlannerAgent** genera un `ExecutionPlan` (LLM o fallback).
-2. **AgentRegistry** instancia los agentes del plan.
-3. **ExecutionGraph** conecta los nodos en secuencia lineal.
-4. **Orchestrator** ejecuta cada agente y procesa acciones pendientes.
-
-Orden por defecto:
+## Flujo del equipo
 
 ```
-analyst → architect → developer → qa
+PM → Architect → Developer → QA → Reviewer → Security
 ```
 
-| Agente | Rol |
-|---|---|
-| Business Analyst | Historias de usuario |
-| Software Architect | SDD y arquitectura |
-| Flutter Developer | Tareas y acciones de filesystem |
-| QA Engineer | Reporte de calidad |
+## Inicio rápido
 
-## Estructura del proyecto
+1. [README_AI_WORKFLOW.md](README_AI_WORKFLOW.md) — guía operativa
+2. [docs/SOFTWARE_FACTORY_WORKFLOW.md](docs/SOFTWARE_FACTORY_WORKFLOW.md) — fases detalladas
+3. Proyecto nuevo → `prompts/new_project.md` + rule `@product_manager`
+4. Proyecto existente → skill `project_analysis` + `prompts/analyze_existing_project.md`
+
+## Estructura del repositorio
 
 ```
-agents/          Agentes, BaseAgent, AgentRegistry, AgentResult
-actions/         Acciones ejecutables (crear archivos, directorios)
-context/         AgentContext y ContextBuilder
-execution/       ExecutionGraph, ExecutionPolicy, ExecutionHistory
-llm/             Providers, factory, configuración
-memory/          MemoryStore y AgentMemory
-orchestrator/    Coordinación secuencial de agentes
-parsers/         Parsers JSON por agente
-planning/        PlannerAgent, ExecutionPlan
-prompts/         Prompts por agente
-quality/         QualityEvaluator, QualityDecision (standalone)
-review/          ReviewerAgent, ReviewResult (standalone)
-state/           ProjectState compartido
-tools/           FileSystemTool, TerminalTool
-workflows/       Composición del flujo software_creation
-tests/           Suite de tests (pytest)
-main.py          Demo del flujo completo
+.cursor/
+├── rules/          # Roles: PM, Architect, Developer, QA, Reviewer, Security
+└── skills/         # Workflows: flutter_feature, backend_feature, testing, etc.
+
+docs/
+├── SPEC.md              # Especificación (PM)
+├── ARCHITECTURE.md      # Arquitectura (Architect)
+├── TASKS.md             # Plan de tareas
+├── CHANGELOG.md         # Historial de cambios
+├── QA_REPORT.md         # Reporte QA
+├── REVIEW.md            # Code review
+├── SECURITY_REPORT.md   # Auditoría de seguridad
+├── templates/           # Plantillas para nuevos proyectos
+└── SOFTWARE_FACTORY_WORKFLOW.md
+
+prompts/            # Prompts copiables en Cursor Agent Mode
+projects/           # Proyectos de software (ej. barberia-app)
 ```
 
-## Componentes destacados
+## Roles y documentos
 
-### Agent Registry
+| Rule | Documento principal |
+|------|---------------------|
+| `product_manager` | `docs/SPEC.md` |
+| `architect` | `docs/ARCHITECTURE.md`, `docs/TASKS.md` |
+| `developer` | `projects/` |
+| `qa` | `docs/QA_REPORT.md` |
+| `reviewer` | `docs/REVIEW.md` |
+| `security` | `docs/SECURITY_REPORT.md` |
 
-Fuente única de verdad para ids, capacidades y factories de agentes. Usado por el Planner (prompt y parser) y por el workflow para instanciar agentes.
+## Skills disponibles
 
-```python
-from agents.agent_registry import create_default_registry
+`project_analysis` · `feature_design` · `flutter_feature` · `backend_feature` · `database_change` · `bug_fix` · `refactor` · `testing` · `code_review` · `security_audit`
 
-registry = create_default_registry()
-agents = registry.build_agents(llm_provider, memory_store)
-```
+## Proyecto de ejemplo
 
-### Planner
+`projects/barberia-app/` — Barbería App (Flutter), con SPEC y arquitectura en `docs/`.
 
-Genera el plan de ejecución a partir del objetivo del proyecto. Si el LLM falla, usa un fallback determinista con el orden del registry.
+## Historial
 
-### Reviewer y Quality (fase actual)
-
-Módulos reutilizables que **no modifican** el workflow ni la `ExecutionPolicy`:
-
-```python
-from review import ReviewerAgent
-from quality import QualityEvaluator
-
-review = ReviewerAgent(llm_provider).review(
-    reviewed_agent="analyst",
-    objective="Mi app",
-    agent_output={"user_stories": ["..."]},
-)
-decision = QualityEvaluator().evaluate(review)
-```
-
-Reglas de calidad:
-
-- `approved=True` y `score >= 0.75` → pasa
-- `approved=False` → no pasa, `retry=True`
-- `approved=True` y `score < 0.75` → no pasa, `retry=True`
-
-## Salida de `main.py`
-
-La demo imprime:
-
-- Historias de usuario
-- Software Design Document
-- Arquitectura
-- Tareas de desarrollo
-- Artefactos generados y su fuente (`developer_llm` / `developer_fallback`)
-- Reporte QA
-- Execution history
-- Logs de ejecución
-
-Los artefactos generados por el developer se escriben en `projects/<nombre-proyecto>/`.
-
-## Licencia
-
-Proyecto interno de desarrollo. Ajustar según la política del repositorio.
+Framework Python de agentes eliminado en favor de metodología Cursor-only. Backup: commit `63891e5`. Detalle: [docs/CLEANUP_REPORT.md](docs/CLEANUP_REPORT.md).
