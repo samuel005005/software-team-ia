@@ -111,6 +111,20 @@ class MockLLMProvider(LLMProvider):
                 indent=2,
             )
 
+        if "software execution planner" in system or "genera un plan de ejecución" in user:
+            return json.dumps(
+                {
+                    "nodes": [
+                        "analyst",
+                        "architect",
+                        "developer",
+                        "qa",
+                    ]
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+
         return json.dumps(
             {
                 "message": "Respuesta simulada del MockLLMProvider",
