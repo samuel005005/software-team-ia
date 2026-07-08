@@ -3,6 +3,8 @@ from agents.architect_agent import ArchitectAgent
 from agents.base_agent import BaseAgent
 from agents.developer_agent import DeveloperAgent
 from agents.qa_agent import QAAgent
+from execution.execution_graph import ExecutionGraph
+from execution.execution_node import ExecutionNode
 from llm.base_provider import LLMProvider
 from llm.llm_config import LLMConfig
 from llm.provider_factory import ProviderFactory
@@ -27,17 +29,42 @@ def create_memory_store() -> MemoryStore:
     return MemoryStore()
 
 
-def get_software_creation_agents() -> list[BaseAgent]:
-    """Retorna el flujo de agentes para la creación de software.
+def create_software_creation_graph() -> ExecutionGraph:
+    """Construye el grafo de ejecución para la creación de software.
 
-    AnalystAgent -> ArchitectAgent -> DeveloperAgent -> QAAgent
+    Analyst -> Architect -> Developer -> QA
     """
     llm_provider = create_llm_provider()
     memory_store = create_memory_store()
 
-    return [
-        AnalystAgent(llm_provider=llm_provider, memory_store=memory_store),
-        ArchitectAgent(llm_provider=llm_provider, memory_store=memory_store),
-        DeveloperAgent(llm_provider=llm_provider, memory_store=memory_store),
-        QAAgent(llm_provider=llm_provider, memory_store=memory_store),
-    ]
+    analyst = ExecutionNode(
+        id="analyst",
+        agent=AnalystAgent(llm_provider=llm_provider, memory_store=memory_store),
+    )
+    architect = ExecutionNode(
+        id="architect",
+        agent=ArchitectAgent(llm_provider=llm_provider, memory_store=memory_store),
+    )
+    developer = ExecutionNode(
+        id="developer",
+        agent=DeveloperAgent(llm_provider=llm_provider, memory_store=memory_store),
+    )
+    qa = ExecutionNode(
+        id="qa",
+        agent=QAAgent(llm_provider=llm_provider, memory_store=memory_store),
+    )
+
+    graph = ExecutionGraph()
+    graph.add_node(analyst)
+    graph.add_node(architect)
+    graph.add_node(developer)
+    graph.add_node(qa)
+    graph.set_start(analyst)
+    analyst.connect(architect).connect(developer).connect(qa)
+
+    return graph
+
+
+def get_software_creation_agents() -> list[BaseAgent]:
+    """Retorna el flujo de agentes para la creación de software."""
+    return create_software_creation_graph().get_agents()

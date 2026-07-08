@@ -12,6 +12,7 @@ class LLMConfigTestCase(unittest.TestCase):
         self.assertEqual(config.fixed_duration_ms, 5)
         self.assertIsNone(config.openai_api_key)
         self.assertIsNone(config.anthropic_api_key)
+        self.assertIsNone(config.google_api_key)
 
     def test_from_env_uses_defaults(self) -> None:
         config = LLMConfig.from_env({})
@@ -21,6 +22,7 @@ class LLMConfigTestCase(unittest.TestCase):
         self.assertEqual(config.fixed_duration_ms, 5)
         self.assertIsNone(config.openai_api_key)
         self.assertIsNone(config.anthropic_api_key)
+        self.assertIsNone(config.google_api_key)
 
     def test_from_env_reads_provider_and_model(self) -> None:
         config = LLMConfig.from_env(
@@ -57,6 +59,21 @@ class LLMConfigTestCase(unittest.TestCase):
         config = LLMConfig.from_env({"ANTHROPIC_API_KEY": "sk-ant-test-key"})
 
         self.assertEqual(config.anthropic_api_key, "sk-ant-test-key")
+
+    def test_from_env_reads_google_api_key(self) -> None:
+        config = LLMConfig.from_env({"GOOGLE_API_KEY": "google-test-key"})
+
+        self.assertEqual(config.google_api_key, "google-test-key")
+
+    def test_to_factory_kwargs_includes_google_api_key_for_gemini(self) -> None:
+        config = LLMConfig(
+            provider_name="gemini",
+            google_api_key="google-test-key",
+        )
+
+        kwargs = config.to_factory_kwargs()
+
+        self.assertEqual(kwargs["api_key"], "google-test-key")
 
     def test_to_factory_kwargs_includes_openai_api_key(self) -> None:
         config = LLMConfig(provider_name="openai", openai_api_key="sk-test-key")

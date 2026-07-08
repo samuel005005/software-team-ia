@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any
 
+from agents.agent_result import AgentResult
 from context.agent_context import AgentContext
 from execution.execution_record import ExecutionRecord, ExecutionStatus
 from llm.base_provider import LLMProvider
@@ -22,6 +23,12 @@ class BaseAgent(ABC):
     ) -> None:
         self._llm_provider = llm_provider
         self._memory_store = memory_store
+        self._last_result: AgentResult | None = None
+
+    @property
+    def last_result(self) -> AgentResult | None:
+        """Último resultado estructurado producido por execute()."""
+        return self._last_result
 
     @property
     @abstractmethod
@@ -84,7 +91,41 @@ class BaseAgent(ABC):
                 f"[ExecutionHistory] {type(self).__name__} falló durante la ejecución"
             )
 
+        self._last_result = self.build_agent_result(
+            success=status == ExecutionStatus.SUCCESS,
+            output=output_summary,
+            errors=errors,
+        )
+
         return state
+
+    def build_agent_result(
+        self,
+        *,
+        success: bool,
+        output: str,
+        errors: list[str] | None = None,
+        warnings: list[str] | None = None,
+        confidence: float | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> AgentResult:
+        """Construye un AgentResult estándar para el agente actual."""
+        if success:
+            return AgentResult.success_result(
+                agent_name=self.name,
+                output=output,
+                confidence=1.0 if confidence is None else confidence,
+                warnings=warnings,
+                metadata=metadata,
+            )
+
+        return AgentResult.failure_result(
+            agent_name=self.name,
+            output=output,
+            issues=errors,
+            warnings=warnings,
+            metadata=metadata,
+        )
 
     def _get_memory(self) -> AgentMemory:
         if self._memory_store is None:

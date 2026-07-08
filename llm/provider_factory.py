@@ -2,8 +2,6 @@ from llm.base_provider import LLMProvider
 from llm.llm_config import LLMConfig
 from llm.mock_provider import MockLLMProvider
 
-_PLANNED_PROVIDERS = frozenset({"gemini"})
-
 
 class ProviderFactory:
     """Crea instancias de LLMProvider según nombre y configuración."""
@@ -35,11 +33,14 @@ class ProviderFactory:
             model = str(config.get("model") or ClaudeProvider.DEFAULT_MODEL)
             return ClaudeProvider(api_key=str(api_key), model=model)
 
-        if name in _PLANNED_PROVIDERS:
-            raise NotImplementedError(
-                f"El proveedor '{name}' no está implementado aún. "
-                "Use 'mock' para desarrollo y pruebas."
-            )
+        if name == "gemini":
+            from llm.gemini_provider import GeminiProvider
+
+            api_key = config.get("api_key")
+            if not api_key:
+                raise ValueError("GeminiProvider requiere api_key en la configuración")
+            model = str(config.get("model") or GeminiProvider.DEFAULT_MODEL)
+            return GeminiProvider(api_key=str(api_key), model=model)
 
         raise ValueError(f"Proveedor LLM desconocido: '{provider_name}'")
 

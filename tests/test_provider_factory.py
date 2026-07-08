@@ -4,6 +4,7 @@ from llm.base_provider import LLMProvider
 from llm.llm_config import LLMConfig
 from llm.mock_provider import MockLLMProvider
 from llm.claude_provider import ClaudeProvider
+from llm.gemini_provider import GeminiProvider
 from llm.openai_provider import OpenAIProvider
 from llm.provider_factory import ProviderFactory
 from orchestrator.orchestrator import Orchestrator
@@ -75,11 +76,21 @@ class ProviderFactoryTestCase(unittest.TestCase):
 
         self.assertIn("api_key", str(ctx.exception))
 
-    def test_planned_providers_raise_not_implemented(self) -> None:
-        with self.assertRaises(NotImplementedError) as ctx:
+    def test_create_gemini_provider(self) -> None:
+        provider = ProviderFactory.create(
+            "gemini",
+            api_key="test-api-key",
+            model="gemini-2.0-flash",
+        )
+
+        self.assertIsInstance(provider, GeminiProvider)
+        self.assertEqual(provider.provider_name, "gemini")
+
+    def test_create_gemini_provider_requires_api_key(self) -> None:
+        with self.assertRaises(ValueError) as ctx:
             ProviderFactory.create("gemini")
 
-        self.assertIn("gemini", str(ctx.exception))
+        self.assertIn("api_key", str(ctx.exception))
 
     def test_workflow_uses_factory_by_default(self) -> None:
         agents = get_software_creation_agents()

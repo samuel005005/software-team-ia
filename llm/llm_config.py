@@ -12,6 +12,7 @@ class LLMConfig:
     fixed_duration_ms: int = 5
     openai_api_key: str | None = None
     anthropic_api_key: str | None = None
+    google_api_key: str | None = None
 
     @classmethod
     def from_env(cls, environ: Mapping[str, str] | None = None) -> "LLMConfig":
@@ -21,6 +22,7 @@ class LLMConfig:
         fixed_duration_ms = int(env.get("LLM_FIXED_DURATION_MS", "5"))
         openai_api_key = env.get("OPENAI_API_KEY") or None
         anthropic_api_key = env.get("ANTHROPIC_API_KEY") or None
+        google_api_key = env.get("GOOGLE_API_KEY") or None
 
         return cls(
             provider_name=provider_name,
@@ -28,6 +30,7 @@ class LLMConfig:
             fixed_duration_ms=fixed_duration_ms,
             openai_api_key=openai_api_key,
             anthropic_api_key=anthropic_api_key,
+            google_api_key=google_api_key,
         )
 
     def to_factory_kwargs(self) -> dict[str, object]:
@@ -38,4 +41,6 @@ class LLMConfig:
             kwargs["api_key"] = self.openai_api_key
         elif self.provider_name == "claude" and self.anthropic_api_key:
             kwargs["api_key"] = self.anthropic_api_key
+        elif self.provider_name == "gemini" and self.google_api_key:
+            kwargs["api_key"] = self.google_api_key
         return kwargs
