@@ -1,8 +1,5 @@
-from agents.analyst_agent import AnalystAgent
-from agents.architect_agent import ArchitectAgent
+from agents.agent_registry import AgentRegistry, create_default_registry
 from agents.base_agent import BaseAgent
-from agents.developer_agent import DeveloperAgent
-from agents.qa_agent import QAAgent
 from execution.execution_graph import ExecutionGraph
 from execution.execution_node import ExecutionNode
 from llm.base_provider import LLMProvider
@@ -29,24 +26,6 @@ def create_llm_provider() -> LLMProvider:
 
 def create_memory_store() -> MemoryStore:
     return MemoryStore()
-
-
-def create_agent_registry(
-    llm_provider: LLMProvider,
-    memory_store: MemoryStore,
-) -> dict[str, BaseAgent]:
-    return {
-        "analyst": AnalystAgent(llm_provider=llm_provider, memory_store=memory_store),
-        "architect": ArchitectAgent(
-            llm_provider=llm_provider,
-            memory_store=memory_store,
-        ),
-        "developer": DeveloperAgent(
-            llm_provider=llm_provider,
-            memory_store=memory_store,
-        ),
-        "qa": QAAgent(llm_provider=llm_provider, memory_store=memory_store),
-    }
 
 
 def build_graph_from_plan(
@@ -78,15 +57,17 @@ def build_graph_from_plan(
 
 def create_software_creation_plan(objective: str | None = None) -> ExecutionPlan:
     llm_provider = create_llm_provider()
-    return PlannerAgent(llm_provider=llm_provider).plan(objective)
+    registry = create_default_registry()
+    return PlannerAgent(llm_provider=llm_provider, registry=registry).plan(objective)
 
 
 def create_software_creation_graph() -> ExecutionGraph:
     """Construye el grafo de ejecución para la creación de software."""
     llm_provider = create_llm_provider()
     memory_store = create_memory_store()
-    plan = create_software_creation_plan()
-    agents = create_agent_registry(llm_provider, memory_store)
+    registry = create_default_registry()
+    plan = PlannerAgent(llm_provider=llm_provider, registry=registry).plan()
+    agents = registry.build_agents(llm_provider, memory_store)
     return build_graph_from_plan(plan, agents)
 
 

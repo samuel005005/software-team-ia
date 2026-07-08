@@ -1,13 +1,25 @@
+from agents.agent_registry import AgentRegistry
 from llm.llm_response import LLMResponse
 from parsers.json_content import parse_json_content
 from parsers.parser_error import ParserError
 from planning.execution_plan import ExecutionPlan
 
-KNOWN_NODE_IDS = frozenset({"analyst", "architect", "developer", "qa"})
 PLANNER_AGENT_NAME = "Planner"
 
 
-def parse(response: LLMResponse, *, objective: str = "") -> ExecutionPlan:
+def parse(
+    response: LLMResponse,
+    *,
+    registry: AgentRegistry,
+    objective: str = "",
+) -> ExecutionPlan:
+    allowed_node_ids = frozenset(registry.list_ids())
+    if not allowed_node_ids:
+        raise ParserError(
+            "No hay agentes registrados en el registry",
+            agent_name=PLANNER_AGENT_NAME,
+        )
+
     data = parse_json_content(response.content)
 
     nodes = data.get("nodes")
@@ -29,7 +41,7 @@ def parse(response: LLMResponse, *, objective: str = "") -> ExecutionPlan:
                 f"El nodo en índice {index} debe ser un string",
                 agent_name=PLANNER_AGENT_NAME,
             )
-        if node_id not in KNOWN_NODE_IDS:
+        if node_id not in allowed_node_ids:
             raise ParserError(
                 f"Nodo desconocido en índice {index}: '{node_id}'",
                 agent_name=PLANNER_AGENT_NAME,

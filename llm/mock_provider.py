@@ -43,6 +43,20 @@ class MockLLMProvider(LLMProvider):
         system = request.system_prompt.lower()
         user = request.user_prompt.lower()
 
+        if "software execution planner" in system or "genera un plan de ejecución" in user:
+            return json.dumps(
+                {
+                    "nodes": [
+                        "analyst",
+                        "architect",
+                        "developer",
+                        "qa",
+                    ]
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+
         if "software architect" in system or "genera un software design document" in user:
             return json.dumps(
                 {
@@ -111,15 +125,14 @@ class MockLLMProvider(LLMProvider):
                 indent=2,
             )
 
-        if "software execution planner" in system or "genera un plan de ejecución" in user:
+        if "software reviewer" in system or "revisa el resultado del agente" in user:
             return json.dumps(
                 {
-                    "nodes": [
-                        "analyst",
-                        "architect",
-                        "developer",
-                        "qa",
-                    ]
+                    "approved": True,
+                    "score": 0.94,
+                    "summary": "Mock review passed",
+                    "issues": [],
+                    "recommendations": ["Consider adding more detail"],
                 },
                 ensure_ascii=False,
                 indent=2,

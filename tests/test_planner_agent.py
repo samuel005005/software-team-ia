@@ -8,9 +8,9 @@ from llm.mock_provider import MockLLMProvider
 from llm.provider_error import LLMProviderError
 from planning.execution_plan import ExecutionPlan
 from planning.planner_agent import PlannerAgent
+from agents.agent_registry import create_default_registry
 from workflows.software_creation import (
     build_graph_from_plan,
-    create_agent_registry,
     create_software_creation_plan,
 )
 from memory.memory_store import MemoryStore
@@ -49,7 +49,10 @@ class PlannerAgentTestCase(unittest.TestCase):
 
     def test_workflow_builds_graph_from_plan(self) -> None:
         plan = PlannerAgent().plan()
-        agents = create_agent_registry(MockLLMProvider(), MemoryStore())
+        agents = create_default_registry().build_agents(
+            MockLLMProvider(),
+            MemoryStore(),
+        )
 
         graph = build_graph_from_plan(plan, agents)
 
@@ -62,7 +65,10 @@ class PlannerAgentTestCase(unittest.TestCase):
 
     def test_build_graph_from_plan_raises_for_unknown_node(self) -> None:
         plan = ExecutionPlan(nodes=["analyst", "unknown"])
-        agents = create_agent_registry(MockLLMProvider(), MemoryStore())
+        agents = create_default_registry().build_agents(
+            MockLLMProvider(),
+            MemoryStore(),
+        )
 
         with self.assertRaises(ValueError) as ctx:
             build_graph_from_plan(plan, agents)
