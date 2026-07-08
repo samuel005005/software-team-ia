@@ -1,5 +1,9 @@
+from pathlib import Path
+
 from agents.agent_registry import AgentRegistry, create_default_registry
 from agents.base_agent import BaseAgent
+from agents.developer_agent import DeveloperAgent
+from artifacts.artifact_writer import ArtifactWriter
 from execution.execution_graph import ExecutionGraph
 from execution.execution_node import ExecutionNode
 from llm.base_provider import LLMProvider
@@ -11,6 +15,8 @@ from planning.planner_agent import PlannerAgent
 from tools.filesystem_tool import FileSystemTool
 from tools.terminal_tool import TerminalTool
 from tools.tool_executor import ToolExecutor
+from tools.tool_registry import DEFAULT_WORKSPACE_ROOT, create_default_tool_registry
+from workspace.workspace import Workspace
 
 
 def create_tool_executor() -> ToolExecutor:
@@ -26,6 +32,38 @@ def create_llm_provider() -> LLMProvider:
 
 def create_memory_store() -> MemoryStore:
     return MemoryStore()
+
+
+def create_project_workspace() -> Workspace:
+    """Crea el workspace seguro para proyectos generados."""
+    return Workspace(str(DEFAULT_WORKSPACE_ROOT))
+
+
+def build_agents_for_software_creation(
+    llm_provider: LLMProvider,
+    memory_store: MemoryStore,
+    workspace: Workspace,
+) -> dict[str, BaseAgent]:
+    """Construye agentes del flujo, inyectando ArtifactWriter en el Developer."""
+    registry = create_default_registry()
+    tool_registry = create_default_tool_registry(workspace=workspace)
+    artifact_writer = ArtifactWriter(tool_registry)
+
+    agents: dict[str, BaseAgent] = {}
+    for agent_id in registry.list_ids():
+        if agent_id == "developer":
+            agents[agent_id] = DeveloperAgent(
+                llm_provider=llm_provider,
+                memory_store=memory_store,
+                artifact_writer=artifact_writer,
+            )
+        else:
+            agents[agent_id] = registry.create_agent(
+                agent_id,
+                llm_provider,
+                memory_store,
+            )
+    return agents
 
 
 def build_graph_from_plan(
@@ -65,9 +103,16 @@ def create_software_creation_graph() -> ExecutionGraph:
     """Construye el grafo de ejecución para la creación de software."""
     llm_provider = create_llm_provider()
     memory_store = create_memory_store()
-    registry = create_default_registry()
-    plan = PlannerAgent(llm_provider=llm_provider, registry=registry).plan()
-    agents = registry.build_agents(llm_provider, memory_store)
+    workspace = create_project_workspace()
+    plan = PlannerAgent(
+        llm_provider=llm_provider,
+        registry=create_default_registry(),
+    ).plan()
+    agents = build_agents_for_software_creation(
+        llm_provider,
+        memory_store,
+        workspace,
+    )
     return build_graph_from_plan(plan, agents)
 
 
