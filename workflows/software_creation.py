@@ -3,7 +3,9 @@ from agents.architect_agent import ArchitectAgent
 from agents.base_agent import BaseAgent
 from agents.developer_agent import DeveloperAgent
 from agents.qa_agent import QAAgent
-from llm.mock_provider import MockLLMProvider
+from llm.base_provider import LLMProvider
+from llm.llm_config import LLMConfig
+from llm.provider_factory import ProviderFactory
 from memory.memory_store import MemoryStore
 from tools.filesystem_tool import FileSystemTool
 from tools.terminal_tool import TerminalTool
@@ -17,8 +19,8 @@ def create_tool_executor() -> ToolExecutor:
     return executor
 
 
-def create_llm_provider() -> MockLLMProvider:
-    return MockLLMProvider()
+def create_llm_provider() -> LLMProvider:
+    return ProviderFactory.from_config(LLMConfig.from_env())
 
 
 def create_memory_store() -> MemoryStore:
@@ -36,6 +38,6 @@ def get_software_creation_agents() -> list[BaseAgent]:
     return [
         AnalystAgent(llm_provider=llm_provider, memory_store=memory_store),
         ArchitectAgent(llm_provider=llm_provider, memory_store=memory_store),
-        DeveloperAgent(),
-        QAAgent(),
+        DeveloperAgent(llm_provider=llm_provider, memory_store=memory_store),
+        QAAgent(llm_provider=llm_provider, memory_store=memory_store),
     ]

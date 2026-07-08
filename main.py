@@ -36,7 +36,9 @@ def main() -> None:
     print("=" * 50)
     for task in final_state.tasks:
         print(f"  [{task['id']}] {task['title']} ({task['status']})")
-        print(f"      {task['description']}")
+        description = task.get("description")
+        if description:
+            print(f"      {description}")
 
     print("\n" + "=" * 50)
     print("REPORTE QA")

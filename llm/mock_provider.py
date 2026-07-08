@@ -40,9 +40,25 @@ class MockLLMProvider(LLMProvider):
         )
 
     def _build_content(self, request: LLMRequest) -> str:
-        prompt = f"{request.system_prompt}\n{request.user_prompt}".lower()
+        system = request.system_prompt.lower()
+        user = request.user_prompt.lower()
 
-        if "historia" in prompt or "user stor" in prompt or "analyst" in prompt:
+        if "software architect" in system or "genera un software design document" in user:
+            return json.dumps(
+                {
+                    "architecture": {
+                        "frontend": "Flutter + Riverpod",
+                        "backend": "FastAPI",
+                        "database": "PostgreSQL",
+                    },
+                    "patterns": ["Clean Architecture", "Feature First"],
+                    "sdd": "Software Design Document generado por MockLLMProvider",
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+
+        if "business analyst" in system or "genera historias de usuario" in user:
             return json.dumps(
                 {
                     "user_stories": [
@@ -55,32 +71,20 @@ class MockLLMProvider(LLMProvider):
                 indent=2,
             )
 
-        if "design document" in prompt or "sdd" in prompt or "architect" in prompt:
-            return json.dumps(
-                {
-                    "architecture": {
-                        "frontend": "Flutter + Riverpod",
-                        "backend": "FastAPI",
-                        "database": "PostgreSQL",
-                    },
-                    "patterns": ["Clean Architecture", "Feature First"],
-                },
-                ensure_ascii=False,
-                indent=2,
-            )
-
-        if "tarea" in prompt or "task" in prompt or "developer" in prompt:
+        if "flutter developer" in system or "genera tareas" in user:
             return json.dumps(
                 {
                     "tasks": [
                         {
                             "id": 1,
                             "title": "Configurar proyecto Flutter",
+                            "description": "Crear carpetas lib/core, lib/features y lib/shared con Clean Architecture",
                             "status": "pending",
                         },
                         {
                             "id": 2,
                             "title": "Implementar autenticación JWT",
+                            "description": "Registro, inicio de sesión y Secure Storage en el cliente",
                             "status": "pending",
                         },
                     ]
@@ -89,13 +93,18 @@ class MockLLMProvider(LLMProvider):
                 indent=2,
             )
 
-        if "qa" in prompt or "calidad" in prompt or "valid" in prompt:
+        if "qa engineer" in system or "valida la calidad" in user:
             return json.dumps(
                 {
                     "qa_report": {
                         "status": "APROBADO",
                         "checks_passed": 3,
                         "checks_total": 3,
+                        "details": [
+                            "Historias de usuario: OK",
+                            "Arquitectura técnica: OK",
+                            "Tareas de desarrollo: OK",
+                        ],
                     }
                 },
                 ensure_ascii=False,

@@ -5,7 +5,7 @@ Crear una aplicación móvil para administrar una barbería
 
 ## Arquitectura
 Frontend:
-Flutter
+Flutter + Riverpod
 
 Backend:
 FastAPI

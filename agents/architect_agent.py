@@ -1,8 +1,9 @@
+from typing import Any
+
 from agents.base_agent import BaseAgent
 from context.agent_context import AgentContext
 from memory.agent_memory import AgentMemory
 from state.project_state import ProjectState
-from typing import Any
 
 
 class ArchitectAgent(BaseAgent):

@@ -1,4 +1,6 @@
 from agents.base_agent import BaseAgent
+from context.agent_context import AgentContext
+from memory.agent_memory import AgentMemory
 from state.project_state import ProjectState
 
 
@@ -9,53 +11,43 @@ class QAAgent(BaseAgent):
     def name(self) -> str:
         return "QA Engineer"
 
+    @property
+    def uses_llm_pipeline(self) -> bool:
+        return True
+
     def process(self, state: ProjectState) -> ProjectState:
+        """Reservado para compatibilidad; QAAgent usa process_with_llm."""
+        return state
+
+    def process_with_llm(
+        self,
+        context: AgentContext,
+        memory: AgentMemory,
+        state: ProjectState,
+    ) -> ProjectState:
+        inputs = context.inputs
         state.logs.append(f"[{self.name}] Iniciando revisión de calidad")
+        state.logs.append(
+            f"[{self.name}] Artefactos: "
+            f"historias={inputs.get('user_stories_count', 0)}, "
+            f"arquitectura={'sí' if inputs.get('has_architecture') else 'no'}, "
+            f"tareas={inputs.get('tasks_count', 0)}, "
+            f"archivos={inputs.get('generated_files_count', 0)}"
+        )
+        state.logs.append(f"[{self.name}] Ejecutando pipeline LLM")
 
-        has_user_stories = bool(state.user_stories)
-        has_architecture = bool(state.architecture)
-        has_tasks = bool(state.tasks)
+        parsed = self._execute_llm_pipeline(context, memory)
+        qa_report = parsed["qa_report"]
+        qa_report_text = parsed["qa_report_text"]
 
-        checks = [
-            ("Historias de usuario", has_user_stories, len(state.user_stories)),
-            ("Arquitectura técnica", has_architecture, 1 if has_architecture else 0),
-            ("Tareas de desarrollo", has_tasks, len(state.tasks)),
-        ]
+        state.qa_report = qa_report_text
+        memory.add_note("QA report generado mediante LLM")
 
-        passed_checks = sum(1 for _, passed, _ in checks if passed)
-        total_checks = len(checks)
-        all_passed = passed_checks == total_checks
-
-        report_lines = [
-            "=== REPORTE QA ===",
-            f"Estado general: {'APROBADO' if all_passed else 'RECHAZADO'}",
-            f"Verificaciones: {passed_checks}/{total_checks}",
-            "",
-            "Detalle de verificaciones:",
-        ]
-
-        for label, passed, count in checks:
-            status = "OK" if passed else "FALTA"
-            report_lines.append(f"  - {label}: {status} ({count} elemento(s))")
-
-        if all_passed:
-            report_lines.extend(
-                [
-                    "",
-                    "Conclusión: El proyecto cuenta con la documentación mínima",
-                    "requerida para iniciar el desarrollo.",
-                ]
-            )
-        else:
-            report_lines.extend(
-                [
-                    "",
-                    "Conclusión: Faltan artefactos necesarios antes de continuar.",
-                ]
-            )
-
-        state.qa_report = "\n".join(report_lines)
-        state.logs.append(f"[{self.name}] Reporte QA generado: {passed_checks}/{total_checks} OK")
+        checks_passed = qa_report.get("checks_passed", 0)
+        checks_total = qa_report.get("checks_total", 0)
+        state.logs.append(
+            f"[{self.name}] Reporte QA generado: {checks_passed}/{checks_total} OK via LLM"
+        )
 
         return state
 

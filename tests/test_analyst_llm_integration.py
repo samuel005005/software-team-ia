@@ -72,7 +72,7 @@ class AnalystLLMIntegrationTestCase(unittest.TestCase):
 
         self.assertEqual(len(result.user_stories), 3)
         self.assertTrue(result.software_design_document)
-        self.assertEqual(len(result.tasks), 7)
+        self.assertEqual(len(result.tasks), 2)
         self.assertTrue(result.qa_report)
         self.assertEqual(len(result.execution_history.get_all()), 4)
 

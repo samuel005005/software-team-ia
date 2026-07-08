@@ -65,6 +65,30 @@ class MockLLMProviderTestCase(unittest.TestCase):
         self.assertIn("architecture", parsed)
         self.assertEqual(parsed["architecture"]["frontend"], "Flutter + Riverpod")
 
+    def test_returns_structured_developer_response(self) -> None:
+        request = LLMRequest(
+            system_prompt="Eres un Flutter Developer experto en desarrollo.",
+            user_prompt="Genera tareas de desarrollo basadas en el SDD del proyecto.",
+        )
+        response = self.provider.generate(request)
+        parsed = json.loads(response.content)
+
+        self.assertIn("tasks", parsed)
+        self.assertEqual(len(parsed["tasks"]), 2)
+        self.assertEqual(parsed["tasks"][0]["title"], "Configurar proyecto Flutter")
+
+    def test_returns_structured_qa_response(self) -> None:
+        request = LLMRequest(
+            system_prompt="Eres un QA Engineer experto en aseguramiento de calidad.",
+            user_prompt="Valida la calidad y completitud del proyecto según los artefactos.",
+        )
+        response = self.provider.generate(request)
+        parsed = json.loads(response.content)
+
+        self.assertIn("qa_report", parsed)
+        self.assertEqual(parsed["qa_report"]["status"], "APROBADO")
+        self.assertEqual(parsed["qa_report"]["checks_passed"], 3)
+
 
 if __name__ == "__main__":
     unittest.main()
