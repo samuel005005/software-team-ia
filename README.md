@@ -8,6 +8,130 @@ Idea  →  SPEC  →  ARCHITECTURE  →  TASKS  →  projects/  →  QA / Review
 
 ---
 
+## ¿Qué es este sistema?
+
+**No es una aplicación.** Es una **fábrica de software**: un equipo de IA + documentación + automatización para construir cualquier producto en `projects/`.
+
+> Analogía: una constructora con planos obligatorios. **SPEC** = lo que el cliente quiere · **ARCHITECTURE** = cómo se construye · **TASKS** = cronograma · **Rules/Skills** = estándares de la empresa · **Factory** = el capataz que asigna la siguiente tarea · **projects/** = la obra.
+
+**Tú defines qué quieres** (en chat y luego en `SPEC.md`). La IA diseña y ejecuta. El factory automatiza la ejecución tarea por tarea.
+
+### Las 4 capas
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  1. HUMANO — idea, aprobaciones, prioridades            │
+└──────────────────────────┬──────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│  2. DOCUMENTOS (docs/) — SPEC, ARCHITECTURE, TASKS…     │
+│     Fuente de verdad del proceso                        │
+└──────────────────────────┬──────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│  3. EQUIPO IA — rules (roles) + skills (know-how)       │
+└──────────────────────────┬──────────────────────────────┘
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│  4. EJECUCIÓN — Cursor manual  O  factory (automático) │
+│     → código en projects/                               │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Nomenclatura — IDs que verás en los docs
+
+| Prefijo | Significa | Ejemplo | Dónde vive |
+|---------|-----------|---------|------------|
+| **US-XXX** | **User Story** — historia de usuario (qué quiere hacer alguien) | US-005: Reservar cita | `docs/SPEC.md` |
+| **RN-XX** | **Regla de Negocio** — lógica que el sistema siempre debe cumplir | RN-01: Sin doble reserva | `docs/SPEC.md` |
+| **T-XXX** | **Tarea** — trabajo técnico para implementar | T-001: Crear estructura base | `docs/TASKS.md` |
+| **BUG-XXX** | Bug reportado en QA | BUG-001 | `docs/QA_REPORT.md` |
+
+Relación típica:
+
+```
+SPEC:  US-005 "Reservar cita"  +  RN-01 "Sin doble reserva"
+         ↓
+TASKS: T-053 implementar endpoint, T-054 pantalla Flutter
+         ↓
+Código en projects/  →  QA valida US y RN con tests
+```
+
+### Los 6 roles (rules)
+
+Cada rol es un agente con permisos y entregables definidos en `.cursor/rules/`.
+
+| Rule | Rol | Escribe en | No toca |
+|------|-----|------------|---------|
+| `product_manager` | Product Owner | `docs/SPEC.md` | Código |
+| `architect` | Arquitecto | `docs/ARCHITECTURE.md`, `docs/TASKS.md` | Código |
+| `developer` | Developer | `projects/`, tests | SPEC sin aprobación |
+| `qa` | QA Engineer | `docs/QA_REPORT.md` | Código de producción |
+| `reviewer` | Tech Lead | `docs/REVIEW.md` | Código (solo reporta) |
+| `security` | Security | `docs/SECURITY_REPORT.md` | Código de producción |
+
+Activar en Cursor: `@product_manager`, `@architect`, `@developer`, etc.
+
+### El factory — qué hace y por qué importa
+
+El **factory** (`python -m factory`) no reemplaza Cursor: es el **director de orquesta** que:
+
+1. Lee `docs/TASKS.md` — siguiente tarea pendiente
+2. Lee `docs/SPEC.md` — criterios de la historia de usuario
+3. Carga la **rule** del rol (Developer, QA…)
+4. Sugiere **skills** según el tipo de trabajo
+5. Arma un prompt completo y lo envía al **Cursor SDK**
+6. El agente implementa, prueba y actualiza docs
+
+```
+TASKS.md + SPEC.md  →  factory/prompt_builder  →  Cursor SDK  →  projects/
+                              ↓
+                    Analizar → Crear → Probar → [x] en TASKS.md
+```
+
+| Sin factory | Con factory |
+|-------------|-------------|
+| Copias prompts a mano | Prompt armado automáticamente |
+| Puedes saltarte el SPEC | Inyecta US + criterios en cada tarea |
+| Progreso informal | `TASKS.md` es la cola de trabajo |
+| Un rol por sesión | `pipeline` encadena Dev → QA → Review |
+
+**Requisito:** Cursor Desktop abierto + `CURSOR_API_KEY` en `.env`.
+
+### Flujo del equipo (SDD)
+
+```
+Idea (humano)
+  ↓
+Product Manager     →  docs/SPEC.md        (QUÉ: US, RN)
+  ↓
+Architect           →  docs/ARCHITECTURE.md + docs/TASKS.md  (CÓMO, en tareas)
+  ↓
+Developer           →  projects/           (código + tests)
+  ↓
+QA                  →  docs/QA_REPORT.md
+  ↓
+Reviewer            →  docs/REVIEW.md
+  ↓
+Security            →  docs/SECURITY_REPORT.md
+  ↓
+Entrega
+```
+
+Modo **manual** (Cursor) para SPEC y arquitectura. Modo **factory** para ejecutar muchas tareas seguidas.
+
+### Qué NO es
+
+| No es | Es |
+|-------|-----|
+| Una app lista para usar | Metodología + automatización |
+| Un reemplazo de Cursor | Capa encima de Cursor |
+| Un LLM propio | Usa modelos de Cursor (Composer, etc.) |
+| CI/CD o deploy | Orquesta desarrollo local |
+| Jira / Linear | `TASKS.md` es el plan en markdown |
+
+---
+
 ## Qué obtienes
 
 | Pieza | Ubicación | Para qué sirve |
