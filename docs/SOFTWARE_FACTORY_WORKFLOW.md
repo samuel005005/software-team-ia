@@ -4,7 +4,7 @@ Metodología **Spec-Driven Development (SDD)** usando **Cursor** como plataforma
 
 ## Principio
 
-No hay framework de agentes en Python. Cada rol es:
+Cada rol SDD se define con:
 
 1. **Cursor Rule** (`.cursor/rules/`) — comportamiento del rol
 2. **Cursor Skill** (`.cursor/skills/`) — workflows reutilizables
@@ -12,6 +12,23 @@ No hay framework de agentes en Python. Cada rol es:
 4. **Documentos** (`docs/`) — artefactos del proceso
 
 Cursor provee: LLM, contexto, edición, terminal y búsqueda.
+
+### Modo manual vs orquestador
+
+| Modo | Cómo | Cuándo |
+|------|------|--------|
+| **Manual** | Copiar prompt + activar rule en Agent Mode | Control fino, SPEC/ARCHITECTURE |
+| **Automático** | `python -m factory next` o `pipeline` | Tareas repetitivas en `TASKS.md` |
+
+El orquestador (`factory/`) usa **Cursor SDK**, lee `docs/TASKS.md`, compone prompts con rules/skills y ejecuta agentes. Ver [ORCHESTRATOR.md](ORCHESTRATOR.md).
+
+### Flujo por requerimiento (cada tarea Developer)
+
+```
+SPEC (US + criterios)  →  ANALIZAR  →  CREAR  →  PROBAR  →  docs actualizados
+```
+
+El prompt del orquestador inyecta la historia de usuario desde `SPEC.md` y obliga al agente a validar criterios de aceptación antes de marcar `[x]`.
 
 ---
 

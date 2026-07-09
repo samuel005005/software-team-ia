@@ -81,7 +81,13 @@ class AuthenticatedShell extends ConsumerWidget {
         return const [
           _NavItem(AppRoutes.adminDashboard, 'Panel', Icons.dashboard),
           _NavItem(AppRoutes.adminServices, 'Servicios', Icons.content_cut),
+          _NavItem(AppRoutes.adminBarbers, 'Barberos', Icons.badge_outlined),
           _NavItem(AppRoutes.adminUsers, 'Usuarios', Icons.people_outline),
+          _NavItem(
+            AppRoutes.adminBusinessHours,
+            'Horarios',
+            Icons.access_time,
+          ),
           _NavItem(AppRoutes.profile, 'Perfil', Icons.person_outline),
         ];
     }

@@ -3,8 +3,16 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/navigation/session_notifier.dart';
+import '../../features/admin/business_hours/presentation/pages/admin_business_hours_page.dart';
+import '../../features/barber_schedule/presentation/pages/barber_availability_page.dart';
+import '../../features/admin/barbers/presentation/pages/admin_barbers_page.dart';
+import '../../features/admin/services/presentation/pages/admin_services_page.dart';
+import '../../features/admin/users/presentation/pages/admin_users_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
+import '../../features/profile/presentation/pages/profile_page.dart';
+import '../../features/client_booking/presentation/pages/book_appointment_page.dart';
+import '../../features/services/presentation/pages/services_page.dart';
 import '../presentation/shells/authenticated_shell.dart';
 import 'router_redirect.dart';
 import 'router_refresh_notifier.dart';
@@ -59,14 +67,14 @@ GoRouter createAppRouter(Ref ref) {
           GoRoute(
             path: AppRoutes.services,
             name: 'services',
-            builder: (context, state) =>
-                shellPlaceholder('Servicios', 'services'),
+            builder: (context, state) => const ServicesPage(),
           ),
           GoRoute(
             path: AppRoutes.bookAppointment,
             name: 'book-appointment',
-            builder: (context, state) =>
-                shellPlaceholder('Reservar cita', 'client_booking'),
+            builder: (context, state) => BookAppointmentPage(
+              initialServiceId: state.uri.queryParameters['serviceId'],
+            ),
           ),
           GoRoute(
             path: AppRoutes.appointments,
@@ -77,8 +85,7 @@ GoRouter createAppRouter(Ref ref) {
           GoRoute(
             path: AppRoutes.profile,
             name: 'profile',
-            builder: (context, state) =>
-                shellPlaceholder('Perfil', 'profile'),
+            builder: (context, state) => const ProfilePage(),
           ),
           GoRoute(
             path: AppRoutes.barberSchedule,
@@ -89,8 +96,7 @@ GoRouter createAppRouter(Ref ref) {
           GoRoute(
             path: AppRoutes.barberAvailability,
             name: 'barber-availability',
-            builder: (context, state) =>
-                shellPlaceholder('Disponibilidad', 'barber_schedule'),
+            builder: (context, state) => const BarberAvailabilityPage(),
           ),
           GoRoute(
             path: AppRoutes.adminDashboard,
@@ -101,26 +107,22 @@ GoRouter createAppRouter(Ref ref) {
           GoRoute(
             path: AppRoutes.adminServices,
             name: 'admin-services',
-            builder: (context, state) =>
-                shellPlaceholder('Servicios admin', 'admin_management'),
+            builder: (context, state) => const AdminServicesPage(),
           ),
           GoRoute(
             path: AppRoutes.adminBarbers,
             name: 'admin-barbers',
-            builder: (context, state) =>
-                shellPlaceholder('Barberos', 'admin_management'),
+            builder: (context, state) => const AdminBarbersPage(),
           ),
           GoRoute(
             path: AppRoutes.adminUsers,
             name: 'admin-users',
-            builder: (context, state) =>
-                shellPlaceholder('Usuarios', 'admin_management'),
+            builder: (context, state) => const AdminUsersPage(),
           ),
           GoRoute(
             path: AppRoutes.adminBusinessHours,
             name: 'admin-business-hours',
-            builder: (context, state) =>
-                shellPlaceholder('Horarios', 'admin_management'),
+            builder: (context, state) => const AdminBusinessHoursPage(),
           ),
         ],
       ),

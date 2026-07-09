@@ -39,7 +39,7 @@ class AppConfig {
         return const AppConfig(
           environment: AppEnvironment.dev,
           appName: 'Barbería App (Dev)',
-          apiBaseUrl: 'http://localhost:8000/api/v1',
+          apiBaseUrl: 'http://127.0.0.1:8001/api/v1',
           enableLogging: true,
         );
     }

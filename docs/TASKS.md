@@ -308,6 +308,299 @@
 
 **Validación:** `pytest` (28 tests) ✅
 
+### T-032 — Notas de implementación (2026-07-08)
+
+**Estado:** Completada  
+**Historias:** US-001, US-002 — Login/registro Flutter con API real
+
+**Archivos clave:**
+- `features/auth/domain/` — `AuthRepository`, `LoginUseCase`, `RegisterUseCase`
+- `features/auth/data/` — DTOs, `AuthRemoteDataSource`, `AuthRepositoryImpl`
+- `features/auth/presentation/pages/login_page.dart` — formulario email/contraseña
+- `features/auth/presentation/pages/register_page.dart` — registro cliente
+- `core/utils/jwt_decoder.dart` — extrae rol del access token
+- `core/providers/network_providers.dart` — refresh token real en interceptor
+
+**Decisiones:**
+- API dev: `http://127.0.0.1:8001/api/v1`
+- `authDioProvider` separado para evitar ciclo con interceptores
+- Botones mock barbero/admin solo en `kDebugMode`
+- Tras registro exitoso → snackbar + navegación a login
+
+**Validación:** `flutter analyze` ✅ · `flutter test` (35 tests) ✅
+
+### T-033 — Notas de implementación (2026-07-08)
+
+**Estado:** Completada  
+**Historia:** US-008 — Editar perfil personal (cliente)
+
+**Backend:**
+- `GET /api/v1/me` — perfil autenticado (JWT Bearer)
+- `PATCH /api/v1/me` — actualizar `full_name` y `phone` (solo clientes)
+- `app/core/dependencies/auth.py` — `get_current_user`, `require_client`
+- `UpdateClientProfileUseCase`
+
+**Flutter:**
+- Feature `profile/` — repository, use cases, `ProfilePage` / `ClientProfilePage`
+- Email solo lectura (MVP)
+- Barbero/admin: mensaje placeholder (T-034) → **T-034 completada:** `BarberProfilePage`
+
+**Validación:** `pytest` (32) ✅ · `flutter test` (35) ✅
+
+### T-034 — Notas de implementación (2026-07-08)
+
+**Estado:** Completada  
+**Historia:** US-009 — Editar perfil profesional (barbero)
+
+**Backend:**
+- `GET/PATCH /api/v1/me` — barberos editan `full_name` (display_name), `bio`, `photo_url`
+- `UpdateMyProfileUseCase` unificado por rol (cliente / barbero)
+- `GET /api/v1/barbers` — lista barberos bookables activos (público)
+- `BarberRepository.list_bookable()`
+
+**Flutter:**
+- `UserProfile` + DTOs con `bio` y `photoUrl`
+- `BarberProfilePage` — formulario nombre, descripción y URL de foto
+- `ProfilePage` enruta por rol desde `myProfileProvider`
+
+**Validación:** `pytest` (37) ✅ · `flutter test` (35) ✅
+
+### T-035 — Notas de implementación (2026-07-08)
+
+**Estado:** Completada  
+**Historia:** US-002 — Guards de acceso por rol
+
+**Backend:**
+- `require_roles`, `require_client`, `require_barber`, `require_admin`
+- `/admin/*` — solo admin (401 sin token, 403 rol incorrecto)
+- `/appointments` POST/cancel — solo cliente; GET — autenticado
+- `/barber/*` — stubs protegidos solo barbero
+
+**Flutter:**
+- `RouterRedirect.canAccess()` — matriz explícita por rol/ruta
+- `AppRoutes.clientOnlyRoutes`, `sharedRoutes`
+- Tests ampliados (barbero/admin no cruzan áreas)
+
+**Validación:** `pytest` (48) ✅ · `flutter test` (41) ✅
+
+### T-040 — Notas de implementación (2026-07-08)
+
+**Estado:** Completada  
+**Historia:** US-003 — Ver servicios disponibles
+
+**Backend:**
+- `GET /api/v1/services` — servicios activos ordenados alfabéticamente
+- `ServiceRepository.list_active()` + `ListActiveServicesUseCase`
+- Endpoint público (sin auth)
+
+**Flutter:**
+- Feature `services/` — repository, use case, `ServicesPage`
+- Lista con nombre, duración, precio (RD$) y descripción opcional
+- Ruta `/services` conectada a pantalla real
+
+**Validación:** `pytest` (50) ✅ · `flutter test` (43) ✅
+
+### T-041 — Notas de implementación (2026-07-08)
+
+**Estado:** Completada  
+**Historia:** US-015 — Gestionar servicios (admin)
+
+**Backend:**
+- `GET/POST /api/v1/admin/services` — listar (incl. inactivos) y crear
+- `PATCH /api/v1/admin/services/{id}` — editar y activar/desactivar
+- `CreateServiceUseCase`, `UpdateServiceUseCase`, `ListAllServicesUseCase`
+- Solo admin (`require_admin`)
+
+**Flutter:**
+- Feature `admin/services/` — `AdminServicesPage` + formulario dialog
+- Crear, editar y toggle activo desde `/admin/services`
+
+**Validación:** `pytest` (55) ✅ · `flutter test` (45) ✅
+
+### T-042 — Notas de implementación (2026-07-08)
+
+**Estado:** Completada  
+**Historia:** US-014 — Gestionar barberos (admin)
+
+**Backend:**
+- `GET/POST /api/v1/admin/barbers` — listar y crear con credenciales
+- `PATCH /api/v1/admin/barbers/{user_id}` — editar, activar/desactivar, bookable
+- `CreateBarberUseCase`, `UpdateBarberUseCase`, `ListAllBarbersUseCase`
+- Desactivación soft (`is_active`); sin delete físico
+
+**Flutter:**
+- Feature `admin/barbers/` — `AdminBarbersPage` + formulario
+- Tab **Barberos** en navegación admin
+- Toggle activo/reservable desde lista
+
+**Validación:** `pytest` (60) ✅ · `flutter test` (46) ✅
+
+### T-043 — Notas de implementación (2026-07-08)
+
+**Estado:** Completada  
+**Historia:** US-014 — Asignación servicios por barbero
+
+**Backend:**
+- `GET/PUT /api/v1/admin/barbers/{user_id}/services` — consultar y reemplazar asignaciones
+- Tabla `barber_services` vía `BarberServiceRepository`
+- `GET /api/v1/barbers?service_id=` — filtra barberos que ofrecen el servicio
+- Solo servicios activos asignables
+
+**Flutter:**
+- `AdminBarberServicesDialog` — multi-select de servicios activos
+- Botón **Asignar servicios** en cada barbero admin
+
+**Validación:** `pytest` (64) ✅ · `flutter test` (46) ✅
+
+### T-044 — Notas de implementación (2026-07-08)
+
+**Estado:** Completada  
+**Historia:** US-017 — Gestionar usuarios (clientes)
+
+**Backend:**
+- `GET /api/v1/admin/users` — listar clientes registrados
+- `PATCH /api/v1/admin/users/{id}` — desactivar/reactivar cuenta (`is_active`)
+- `GET /api/v1/admin/users/{id}/appointments` — citas asociadas al cliente
+- `ClientRepository`, `AppointmentRepository`, use cases en `application/clients/`
+
+**Flutter:**
+- Feature `admin/users/` — `AdminUsersPage` con lista de clientes
+- Toggle activo/inactivo y diálogo de citas por cliente
+- Ruta `/admin/users` conectada en `app_router.dart`
+
+**Validación:** `pytest` (69) ✅ · `flutter test` (46) ✅
+
+### T-045 — Notas de implementación (2026-07-08)
+
+**Estado:** Completada  
+**Historia:** US-016 — Configurar horarios del local
+
+**Backend:**
+- `GET/PATCH /api/v1/admin/business-hours` — consultar y reemplazar horario semanal
+- `ListBusinessHoursUseCase`, `UpdateBusinessHoursUseCase` en `application/schedules/`
+- Validación de dominio: weekday 1-7, apertura < cierre, días únicos
+- Integración con disponibilidad: días `is_closed` excluyen barberos (`ListAvailableBarbersUseCase`)
+
+**Flutter:**
+- Feature `admin/business_hours/` — `AdminBusinessHoursPage` con edición por día
+- Toggle **Día cerrado** + selectores de apertura/cierre
+- Ruta `/admin/business-hours` conectada en `app_router.dart` y navegación admin
+
+**Validación:** `pytest` (87) ✅ · `flutter analyze` ✅ · `flutter test` (48) ✅
+
+### T-050 — Notas de implementación (2026-07-08)
+
+**Estado:** Completada  
+**Historia:** US-010 — Definir disponibilidad
+
+**Backend:**
+- `GET/PATCH /api/v1/barber/availability` — consultar y reemplazar bloques semanales
+- `ListMyBarberAvailabilityUseCase`, `UpdateMyBarberAvailabilityUseCase`
+- Validación de dominio: weekday 1-7, inicio < fin cuando `is_active`
+- `ScheduleRepository.list_barber_availability()` / `replace_barber_availability()`
+- Solo barbero autenticado (`require_barber`); aislado por `barber_user_id`
+
+**Flutter:**
+- Feature `barber_schedule/` — repository, use cases, `BarberAvailabilityPage`
+- Edición por día con toggle **Disponible** + selectores inicio/fin
+- Ruta `/barber/availability` conectada en `app_router.dart`
+
+**Criterios SPEC cubiertos:**
+- Bloques de disponibilidad por día de la semana (F-B02)
+- Slots fuera de disponibilidad no reservables (RN-05, integrado en `ListAvailableBarbersUseCase`)
+- Actualizar disponibilidad no afecta citas existentes (patrón recurrente semanal)
+
+**Validación:** `pytest` (93) ✅ · `flutter analyze` ✅ · `flutter test` (50) ✅
+
+### T-051 — Notas de implementación (2026-07-08)
+
+**Estado:** Completada  
+**Historia:** US-004 — Consultar barberos y disponibilidad
+
+**Backend:**
+- `GET /api/v1/availability?service_id=&date=` — barberos disponibles para servicio y fecha
+- `ListAvailableBarbersUseCase` — filtra por servicio activo, asignación, bookable, disponibilidad semanal y horario del local
+- Filtro opcional `barber_id` para acotar a un barbero
+- `slots=[]` reservado para T-052 (generación de slots)
+
+**Dominio:**
+- `date_to_weekday()` — mapeo fecha → weekday (1=lunes … 7=domingo)
+- `InvalidDateError`, `ServiceNotAvailableError`
+
+**Criterios SPEC cubiertos (parcial US-004):**
+- Barberos que ofrecen el servicio seleccionado para la fecha ✅
+- No aparecen barberos inactivos ni no reservables ✅
+- Slots de horario → T-052
+
+**Validación:** `pytest` (93) ✅ · `flutter analyze` ✅ · `flutter test` (50) ✅
+
+### T-052 — Notas de implementación (2026-07-08)
+
+**Estado:** Completada  
+**Historias:** US-004, US-005 (generación de slots; reserva completa en T-053/T-054)
+
+**Backend:**
+- `GetAvailabilityUseCase` — orquesta barberos disponibles (T-051) + generación de slots
+- Dominio `app/domain/availability/slots.py` — intersección de ventanas, candidatos, filtro RN-01/RN-06
+- Granularidad fija 15 min (`SLOT_STEP_MINUTES`); duración del slot = `service.duration_minutes`
+- `Settings.business_timezone` (`America/Santo_Domingo`) para combinar fecha+hora y filtrar slots pasados
+- `ScheduleRepository.get_barber_availability_for_weekday()` — bloque activo del barbero
+- `AppointmentRepository.list_blocking_for_barber_on_date()` — citas ≠ `cancelada` que intersectan el día
+- `GET /availability` retorna `slots` con `start`, `end`, `barber_user_id`
+
+**Criterios SPEC cubiertos (US-004):**
+- Slots de horario disponibles (no ocupados) ✅
+- Excluye citas activas; `cancelada` no bloquea ✅
+- Intersección barbero ∩ horario del local (RN-05) ✅
+- Slots pasados excluidos si `date == hoy` ✅
+- Barberos inactivos / servicio inactivo — heredado de T-051 ✅
+
+**Validación:** `pytest` (114) ✅
+
+### T-053 — Notas de implementación (2026-07-08)
+
+**Estado:** Completada  
+**Historia:** US-005 — Reservar cita (backend; UI en T-054)
+
+**Backend:**
+- `CreateAppointmentUseCase` — creación transaccional con pre-validación de slot, `SELECT FOR UPDATE` y constraint EXCLUDE
+- `app/domain/appointments/validation.py` — `is_bookable_slot()` reutiliza lógica T-052 (RN-01, RN-05, RN-06)
+- `app/domain/appointments/errors.py` — errores de dominio (pasado, slot ocupado, barbero/servicio no disponible)
+- `POST /api/v1/appointments` — `201 Created`, estado inicial `confirmada` (ADR #6)
+- `AppointmentResponse` enriquecido — resumen con servicio, barbero, `scheduled_start`/`scheduled_end`
+- `AppointmentRepository.create()` + `lock_blocking_for_barber_in_range()`
+- `BarberServiceRepository.is_assigned()` — validación RN-10
+
+**Criterios SPEC cubiertos (US-005 — backend):**
+- Validación RN-01 (slot no ocupado) ✅
+- Estado `confirmada` automática ✅
+- Confirmación API con resumen ✅
+- Rechazo de reservas en el pasado ✅
+- Flujo completo servicio→barbero→fecha/hora→confirmar → T-054 (Flutter)
+
+**Validación:** `pytest` (121) ✅
+
+### T-054 — Notas de implementación (2026-07-08)
+
+**Estado:** Completada  
+**Historias:** US-004 — Consultar barberos y disponibilidad · US-005 — Reservar cita
+
+**Flutter (`projects/barberia-app/`):**
+- Feature `client_booking/` — capas domain/data/presentation con wizard de 4 pasos
+- `BookAppointmentPage` en `/book-appointment` — servicio → barbero → fecha/hora → confirmar
+- Integración `GET /barbers`, `GET /availability`, `POST /appointments`
+- Pantalla de confirmación post-reserva con resumen (`confirmada`)
+- CTA «Reservar» en `ServicesPage` con pre-selección vía `?serviceId=`
+- Manejo UX: slot ocupado (`409` + refresco), sin disponibilidad (empty state), fecha mínima hoy
+- Dependencias: `intl`, `flutter_localizations` (formato es-DO)
+- Tests: `booking_dtos_test.dart`, `book_appointment_page_test.dart`
+
+**Criterios SPEC cubiertos:**
+- US-004: barberos por servicio, slots no ocupados, sin inactivos (API) ✅
+- US-005: flujo completo, validación RN-01 vía API, estado `confirmada`, resumen, sin pasado ✅
+
+**Validación:** `flutter analyze` ✅ · `flutter test` (57) ✅
+
 ---
 
 ## Fase 2 — Dominio y modelo de datos
@@ -329,10 +622,10 @@
 |----|-------|----------|-------------|--------|
 | T-030 | Implementar registro cliente en backend | US-001 | Developer | `[x]` |
 | T-031 | Implementar login y refresh token | US-002 | Developer | `[x]` |
-| T-032 | Implementar pantalla de login/registro Flutter | US-001, US-002 | Developer | `[ ]` |
-| T-033 | Implementar perfil cliente editable | US-008 | Developer | `[ ]` |
-| T-034 | Implementar perfil profesional del barbero | US-009 | Developer | `[ ]` |
-| T-035 | Implementar guards de acceso por rol | US-002 | Developer | `[ ]` |
+| T-032 | Implementar pantalla de login/registro Flutter | US-001, US-002 | Developer | `[x]` |
+| T-033 | Implementar perfil cliente editable | US-008 | Developer | `[x]` |
+| T-034 | Implementar perfil profesional del barbero | US-009 | Developer | `[x]` |
+| T-035 | Implementar guards de acceso por rol | US-002 | Developer | `[x]` |
 
 ---
 
@@ -340,12 +633,12 @@
 
 | ID | Tarea | Historia | Responsable | Estado |
 |----|-------|----------|-------------|--------|
-| T-040 | Implementar API y pantallas para listar servicios activos | US-003 | Developer | `[ ]` |
-| T-041 | Implementar CRUD admin de servicios | US-015 | Developer | `[ ]` |
-| T-042 | Implementar CRUD admin de barberos | US-014 | Developer | `[ ]` |
-| T-043 | Implementar asignación de servicios por barbero | US-014, regla de negocio servicios por barbero | Developer | `[ ]` |
-| T-044 | Implementar gestión de clientes desde admin | US-017 | Developer | `[ ]` |
-| T-045 | Implementar configuración del horario del local | US-016 | Developer | `[ ]` |
+| T-040 | Implementar API y pantallas para listar servicios activos | US-003 | Developer | `[x]` |
+| T-041 | Implementar CRUD admin de servicios | US-015 | Developer | `[x]` |
+| T-042 | Implementar CRUD admin de barberos | US-014 | Developer | `[x]` |
+| T-043 | Implementar asignación de servicios por barbero | US-014, regla de negocio servicios por barbero | Developer | `[x]` |
+| T-044 | Implementar gestión de clientes desde admin | US-017 | Developer | `[x]` |
+| T-045 | Implementar configuración del horario del local | US-016 | Developer | `[x]` |
 
 ---
 
@@ -353,11 +646,11 @@
 
 | ID | Tarea | Historia | Responsable | Estado |
 |----|-------|----------|-------------|--------|
-| T-050 | Implementar disponibilidad recurrente del barbero | US-010 | Developer | `[ ]` |
-| T-051 | Implementar consulta de barberos disponibles por servicio y fecha | US-004 | Developer | `[ ]` |
-| T-052 | Implementar algoritmo de generación de slots reservables | US-004, US-005 | Developer | `[ ]` |
-| T-053 | Implementar creación transaccional de citas con confirmación automática | US-005 | Developer | `[ ]` |
-| T-054 | Implementar pantalla Flutter de reserva de cita | US-004, US-005 | Developer | `[ ]` |
+| T-050 | Implementar disponibilidad recurrente del barbero | US-010 | Developer | `[x]` |
+| T-051 | Implementar consulta de barberos disponibles por servicio y fecha | US-004 | Developer | `[x]` |
+| T-052 | Implementar algoritmo de generación de slots reservables | US-004, US-005 | Developer | `[x]` |
+| T-053 | Implementar creación transaccional de citas con confirmación automática | US-005 | Developer | `[x]` |
+| T-054 | Implementar pantalla Flutter de reserva de cita | US-004, US-005 | Developer | `[x]` |
 | T-055 | Implementar historial de citas del cliente | US-007 | Developer | `[ ]` |
 | T-056 | Implementar cancelación con regla de 2 horas | US-006 | Developer | `[ ]` |
 

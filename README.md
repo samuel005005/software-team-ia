@@ -1,6 +1,6 @@
 # Software Factory — Cursor AI Team
 
-Repositorio de **fábrica de software** para desarrollo asistido por IA con Cursor. No incluye framework de agentes en Python: usa **Agent Mode**, **Rules** y **Skills**.
+Repositorio de **fábrica de software** para desarrollo asistido por IA con Cursor. Usa **Agent Mode**, **Rules** y **Skills**; opcionalmente el **orquestador automático** (`factory/`) vía Cursor SDK.
 
 ## Metodología
 
@@ -23,9 +23,25 @@ PM → Architect → Developer → QA → Reviewer → Security
 3. Proyecto nuevo → `prompts/new_project.md` + rule `@product_manager`
 4. Proyecto existente → skill `project_analysis` + `prompts/analyze_existing_project.md`
 
+### Orquestador automático (opcional)
+
+```bash
+pip install -r requirements-factory.txt
+export CURSOR_API_KEY=...   # cursor.com → Settings → API
+
+python -m factory pending          # tareas pendientes
+python -m factory run T-051        # analizar + implementar + probar (recomendado)
+python -m factory analyze T-051    # solo análisis
+python -m factory task T-051       # solo implementación
+python -m factory pipeline --max-tasks 1 --review --security
+```
+
+Guía completa: [docs/ORCHESTRATOR.md](docs/ORCHESTRATOR.md)
+
 ## Estructura del repositorio
 
 ```
+factory/            # Orquestador SDD (Cursor SDK) — python -m factory
 .cursor/
 ├── rules/          # Roles: PM, Architect, Developer, QA, Reviewer, Security
 └── skills/         # Workflows: flutter_feature, backend_feature, testing, etc.

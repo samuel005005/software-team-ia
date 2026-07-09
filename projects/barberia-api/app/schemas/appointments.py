@@ -16,6 +16,12 @@ class AppointmentCreateRequest(BaseModel):
 class AppointmentResponse(EntitySchema):
     id: UUID | str
     status: AppointmentStatus
+    scheduled_start: datetime
+    scheduled_end: datetime
+    service_id: UUID | str
+    service_name: str
+    barber_user_id: UUID | str
+    barber_display_name: str
 
 
 class AppointmentListResponse(BaseModel):

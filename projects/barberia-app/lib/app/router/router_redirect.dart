@@ -25,26 +25,20 @@ abstract final class RouterRedirect {
     final role = session.role;
     if (role == null) return AppRoutes.login;
 
-    if (AppRoutes.isBarberArea(location) && role != UserRole.barber) {
-      return session.homeRoute;
-    }
-
-    if (AppRoutes.isAdminArea(location) && role != UserRole.admin) {
-      return session.homeRoute;
-    }
-
-    if (_isClientOnlyRoute(location) &&
-        role != UserRole.client &&
-        !AppRoutes.barberRoutes.contains(location) &&
-        !AppRoutes.adminRoutes.contains(location)) {
+    if (!canAccess(role, location)) {
       return session.homeRoute;
     }
 
     return null;
   }
 
-  static bool _isClientOnlyRoute(String location) =>
-      AppRoutes.clientRoutes.contains(location);
+  static bool canAccess(UserRole role, String location) {
+    if (AppRoutes.isShared(location)) return true;
+    if (AppRoutes.isClientOnly(location)) return role == UserRole.client;
+    if (AppRoutes.isBarberArea(location)) return role == UserRole.barber;
+    if (AppRoutes.isAdminArea(location)) return role == UserRole.admin;
+    return false;
+  }
 
   static String _normalize(String location) {
     final uri = Uri.tryParse(location);

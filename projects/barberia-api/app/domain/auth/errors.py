@@ -12,3 +12,11 @@ class InactiveUserError(Exception):
 
 class InvalidRefreshTokenError(Exception):
     """Refresh token inválido, expirado o revocado."""
+
+
+class ProfileNotFoundError(Exception):
+    """Perfil de usuario no encontrado."""
+
+
+class ProfileUpdateForbiddenError(Exception):
+    """El rol no puede actualizar perfil por este endpoint."""

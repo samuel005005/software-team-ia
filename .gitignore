@@ -37,5 +37,6 @@ projects/*
 !projects/barberia-api/
 !projects/barberia-api/**
 
-# Factory metadata por proyecto
+# Factory metadata
+.factory/
 projects/*/.factory/

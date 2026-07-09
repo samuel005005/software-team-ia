@@ -1,0 +1,37 @@
+from pathlib import Path
+
+from factory.models import TaskStatus
+from factory.task_parser import load_tasks, mark_task_status, next_pending_task, parse_tasks
+
+SAMPLE = """
+| ID | Tarea | Historia | Responsable | Estado |
+|----|-------|----------|-------------|--------|
+| T-040 | Listar servicios | US-003 | Developer | `[x]` |
+| T-044 | Gestionar clientes | US-017 | Developer | `[ ]` |
+| T-045 | Horarios local | US-016 | Developer | `[~]` |
+"""
+
+
+def test_parse_tasks(tmp_path: Path) -> None:
+    tasks = parse_tasks(SAMPLE)
+    assert len(tasks) == 3
+    assert tasks[1].task_id == "T-044"
+    assert tasks[1].status == TaskStatus.PENDING
+
+
+def test_next_pending_task(tmp_path: Path) -> None:
+    path = tmp_path / "TASKS.md"
+    path.write_text(SAMPLE, encoding="utf-8")
+    task = next_pending_task(path)
+    assert task is not None
+    assert task.task_id == "T-044"
+
+
+def test_mark_task_status(tmp_path: Path) -> None:
+    path = tmp_path / "TASKS.md"
+    path.write_text(SAMPLE, encoding="utf-8")
+    assert mark_task_status(path, "T-044", TaskStatus.IN_PROGRESS)
+    updated = path.read_text(encoding="utf-8")
+    assert "T-044" in updated
+    assert "[~]" in updated
+    assert load_tasks(path)[1].status == TaskStatus.IN_PROGRESS

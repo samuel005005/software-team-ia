@@ -5,6 +5,7 @@ from app.api.v1 import (
     appointments,
     auth,
     availability,
+    barber,
     barbers,
     health,
     services,
@@ -20,4 +21,5 @@ v1_router.include_router(barbers.router, prefix="/barbers", tags=["barbers"])
 v1_router.include_router(services.router, prefix="/services", tags=["services"])
 v1_router.include_router(availability.router, prefix="/availability", tags=["availability"])
 v1_router.include_router(appointments.router, prefix="/appointments", tags=["appointments"])
+v1_router.include_router(barber.router, prefix="/barber", tags=["barber"])
 v1_router.include_router(admin.router, prefix="/admin", tags=["admin"])

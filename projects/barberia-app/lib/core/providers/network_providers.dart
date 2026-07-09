@@ -5,6 +5,8 @@ import '../navigation/session_notifier.dart';
 import '../network/api_client.dart';
 import '../network/api_client_factory.dart';
 import '../network/auth_token_store.dart';
+import '../utils/jwt_decoder.dart';
+import '../../features/auth/presentation/providers/auth_providers.dart';
 import 'app_config_provider.dart';
 
 /// Cierra sesión, limpia tokens y borra persistencia segura.
@@ -24,8 +26,25 @@ final apiClientProvider = Provider<ApiClient>((ref) {
       signOutUser(ref);
     },
     onRefreshToken: () async {
-      // Refresh real en T-031.
-      return false;
+      final refresh = ref.read(authTokenStoreProvider)?.refreshToken;
+      if (refresh == null) return false;
+
+      final result = await ref.read(authRepositoryProvider).refresh(
+            refreshToken: refresh,
+          );
+
+      return result.when(
+        success: (tokens) async {
+          final role = JwtDecoder.extractRole(tokens.accessToken);
+          if (role == null) return false;
+          await ref.read(sessionNotifierProvider.notifier).signInAs(
+                role,
+                tokens: tokens,
+              );
+          return true;
+        },
+        error: (_) => false,
+      );
     },
   );
 });

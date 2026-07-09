@@ -31,9 +31,9 @@ def test_auth_login_stub_returns_501(client: TestClient) -> None:
     assert response.status_code == 401
 
 
-def test_me_endpoint_stub_returns_501(client: TestClient) -> None:
+def test_me_endpoint_requires_auth(client: TestClient) -> None:
     response = client.get("/api/v1/me")
-    assert response.status_code == 501
+    assert response.status_code == 401
 
 
 def test_openapi_docs_available(client: TestClient) -> None:

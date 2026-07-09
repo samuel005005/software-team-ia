@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'providers/app_providers.dart';
@@ -45,6 +46,15 @@ class _AppShell extends ConsumerWidget {
       darkTheme: AppTheme.dark,
       themeMode: themeMode,
       locale: locale,
+      supportedLocales: const [
+        Locale('es'),
+        Locale('en'),
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       routerConfig: router,
       debugShowCheckedModeBanner: config.isDevelopment,
     );

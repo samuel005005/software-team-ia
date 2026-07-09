@@ -1,7 +1,9 @@
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
 from pydantic import BaseModel
+
+from app.schemas.barbers import BarberSummary
 
 
 class AvailabilitySlot(BaseModel):
@@ -12,5 +14,6 @@ class AvailabilitySlot(BaseModel):
 
 class AvailabilityResponse(BaseModel):
     service_id: UUID | str
-    date: str
-    slots: list[AvailabilitySlot]
+    date: date
+    barbers: list[BarberSummary]
+    slots: list[AvailabilitySlot] = []

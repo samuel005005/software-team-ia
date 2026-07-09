@@ -26,11 +26,17 @@ abstract final class AppRoutes {
 
   static const publicRoutes = {login, register};
 
-  static const clientRoutes = {
+  static const sharedRoutes = {profile};
+
+  static const clientOnlyRoutes = {
     home,
     services,
     bookAppointment,
     appointments,
+  };
+
+  static const clientRoutes = {
+    ...clientOnlyRoutes,
     profile,
   };
 
@@ -50,6 +56,10 @@ abstract final class AppRoutes {
   };
 
   static bool isPublic(String location) => publicRoutes.contains(location);
+
+  static bool isShared(String location) => sharedRoutes.contains(location);
+
+  static bool isClientOnly(String location) => clientOnlyRoutes.contains(location);
 
   static bool isBarberArea(String location) =>
       location.startsWith('/barber');

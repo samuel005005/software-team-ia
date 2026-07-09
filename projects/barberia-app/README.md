@@ -45,6 +45,8 @@ flutter run --dart-define=APP_ENV=staging
 
 Configuración en `lib/core/config/app_config.dart`.
 
+**API local (dev):** `http://127.0.0.1:8001/api/v1` — requiere `barberia-api` corriendo (`make api`).
+
 ## Estado
 
 - **T-001** ✅ Base Clean Architecture
@@ -52,4 +54,5 @@ Configuración en `lib/core/config/app_config.dart`.
 - **T-003** ✅ Estado global y providers base (theme/locale/loading)
 - **T-004** ✅ Cliente HTTP, errores e interceptores de auth
 - **T-005** ✅ Almacenamiento seguro de sesión (flutter_secure_storage)
-- **T-006+** Backend y dominio pendientes
+- **T-032** ✅ Login/registro conectados al API real
+- **T-033** ✅ Perfil cliente editable (`GET/PATCH /me`)
