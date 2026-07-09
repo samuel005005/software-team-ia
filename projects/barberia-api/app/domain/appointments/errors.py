@@ -3,8 +3,11 @@ from app.domain.availability.errors import ServiceNotAvailableError
 __all__ = [
     "AppointmentNotCancellableError",
     "AppointmentNotFoundError",
+    "AppointmentNotUpdatableError",
     "BarberNotAvailableError",
     "CancellationWindowExpiredError",
+    "InvalidScheduleRangeError",
+    "InvalidStatusTransitionError",
     "PastAppointmentError",
     "ServiceNotAvailableError",
     "SlotNotAvailableError",
@@ -24,7 +27,15 @@ class PastAppointmentError(Exception):
 
 
 class AppointmentNotFoundError(Exception):
-    """La cita no existe o no pertenece al cliente."""
+    """La cita no existe o no pertenece al actor."""
+
+
+class InvalidStatusTransitionError(Exception):
+    """Transición de estado no permitida para el barbero."""
+
+
+class AppointmentNotUpdatableError(Exception):
+    """Cita en estado terminal o no gestionable."""
 
 
 class AppointmentNotCancellableError(Exception):
@@ -33,3 +44,7 @@ class AppointmentNotCancellableError(Exception):
 
 class CancellationWindowExpiredError(Exception):
     """Ventana mínima de anticipación para cancelar expirada (RN-08)."""
+
+
+class InvalidScheduleRangeError(Exception):
+    """Rango de fechas inválido para la agenda del barbero."""

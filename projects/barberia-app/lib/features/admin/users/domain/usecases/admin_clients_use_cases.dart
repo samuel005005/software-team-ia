@@ -56,3 +56,28 @@ class ListClientAppointmentsUseCase
     return _repository.listClientAppointments(params.userId);
   }
 }
+
+class VoidAdminAppointmentParams {
+  const VoidAdminAppointmentParams({
+    required this.appointmentId,
+    required this.reason,
+  });
+
+  final String appointmentId;
+  final String reason;
+}
+
+class VoidAdminAppointmentUseCase
+    extends UseCase<AdminClientAppointment, VoidAdminAppointmentParams> {
+  VoidAdminAppointmentUseCase(this._repository);
+
+  final AdminClientsRepository _repository;
+
+  @override
+  Future<Result<AdminClientAppointment>> call(VoidAdminAppointmentParams params) {
+    return _repository.voidAppointment(
+      appointmentId: params.appointmentId,
+      reason: params.reason,
+    );
+  }
+}

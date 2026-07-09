@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/navigation/session_notifier.dart';
 import '../../features/admin/business_hours/presentation/pages/admin_business_hours_page.dart';
 import '../../features/barber_schedule/presentation/pages/barber_availability_page.dart';
+import '../../features/barber_schedule/presentation/pages/barber_schedule_page.dart';
 import '../../features/admin/barbers/presentation/pages/admin_barbers_page.dart';
 import '../../features/admin/services/presentation/pages/admin_services_page.dart';
 import '../../features/admin/users/presentation/pages/admin_users_page.dart';
@@ -90,8 +91,7 @@ GoRouter createAppRouter(Ref ref) {
           GoRoute(
             path: AppRoutes.barberSchedule,
             name: 'barber-schedule',
-            builder: (context, state) =>
-                shellPlaceholder('Agenda', 'barber_schedule'),
+            builder: (context, state) => const BarberSchedulePage(),
           ),
           GoRoute(
             path: AppRoutes.barberAvailability,

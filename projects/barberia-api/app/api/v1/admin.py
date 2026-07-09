@@ -1,7 +1,13 @@
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+
+from app.application.appointments.void_appointment import (
+    VoidAppointmentCommand,
+    VoidAppointmentUseCase,
+)
 
 from app.application.barbers.manage import (
     CreateBarberCommand,
@@ -35,6 +41,10 @@ from app.application.services.manage import (
 )
 from app.core.dependencies.auth import require_admin
 from app.core.dependencies.database import get_db
+from app.domain.appointments.errors import (
+    AppointmentNotCancellableError,
+    AppointmentNotFoundError,
+)
 from app.domain.auth.errors import EmailAlreadyExistsError
 from app.domain.barbers.errors import BarberNotFoundError, InvalidServiceAssignmentError
 from app.domain.schedules.errors import InvalidBusinessHoursError
@@ -60,6 +70,7 @@ from app.schemas.schedules import (
     BusinessHoursListResponse,
     BusinessHoursUpdateRequest,
 )
+from app.schemas.appointments import AppointmentResponse, VoidAppointmentRequest
 from app.schemas.services import (
     ServiceCreateRequest,
     ServiceListResponse,
@@ -404,6 +415,55 @@ def admin_list_client_appointments(
 
     return AdminClientAppointmentListResponse(
         items=[_to_client_appointment(appointment) for appointment in appointments]
+    )
+
+
+@router.patch(
+    "/appointments/{appointment_id}/void",
+    response_model=AppointmentResponse,
+)
+def admin_void_appointment(
+    appointment_id: UUID,
+    body: VoidAppointmentRequest,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> AppointmentResponse:
+    use_case = VoidAppointmentUseCase(db)
+    try:
+        result = use_case.execute(
+            VoidAppointmentCommand(
+                appointment_id=appointment_id,
+                admin_user_id=current_user.id,
+                reason=body.reason,
+                now=datetime.now(timezone.utc),
+            )
+        )
+        db.commit()
+    except AppointmentNotFoundError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cita no encontrada",
+        ) from exc
+    except AppointmentNotCancellableError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La cita no se puede anular",
+        ) from exc
+    except Exception:
+        db.rollback()
+        raise
+
+    return AppointmentResponse(
+        id=result.id,
+        status=result.status,
+        scheduled_start=result.scheduled_start,
+        scheduled_end=result.scheduled_end,
+        service_id=result.service_id,
+        service_name=result.service_name,
+        barber_user_id=result.barber_user_id,
+        barber_display_name=result.barber_display_name,
     )
 
 

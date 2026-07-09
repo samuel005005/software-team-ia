@@ -2,13 +2,16 @@ import uuid
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
+import pytest
+from sqlalchemy import select
+
 from app.domain.appointments.cancellation import (
     is_client_cancellable_status,
     meets_cancellation_notice,
 )
 from app.domain.appointments.scheduling import calculate_scheduled_end
 from app.domain.enums import AppointmentStatus, UserRole
-from app.infrastructure.db.models.appointment import Appointment
+from app.infrastructure.db.models.appointment import Appointment, AppointmentStatusHistory
 from tests.conftest import requires_db
 from tests.test_create_appointment import (
     TZ,
@@ -139,6 +142,41 @@ def test_cancel_success_confirmada(client, db_session) -> None:
     db_session.refresh(appointment)
     assert appointment.status == AppointmentStatus.CANCELADA
     assert appointment.cancelled_at is not None
+
+
+@requires_db
+@pytest.mark.parametrize(
+    "initial_status",
+    [AppointmentStatus.CONFIRMADA, AppointmentStatus.PENDIENTE],
+)
+def test_cancel_records_status_history(client, db_session, initial_status) -> None:
+    service, barber = _seed_context(db_session)
+    token, owner = _register_and_login(client, db_session)
+    scheduled_start = datetime.now(TZ) + timedelta(hours=5)
+    appointment = _create_appointment_at(
+        db_session,
+        client=owner,
+        barber=barber,
+        service=service,
+        scheduled_start=scheduled_start,
+        status=initial_status,
+    )
+
+    response = _cancel(client, token, str(appointment.id))
+    assert response.status_code == 200
+
+    history = db_session.scalars(
+        select(AppointmentStatusHistory).where(
+            AppointmentStatusHistory.appointment_id == appointment.id
+        )
+    ).all()
+
+    assert len(history) == 1
+    row = history[0]
+    assert row.from_status == initial_status
+    assert row.to_status == AppointmentStatus.CANCELADA
+    assert row.changed_by_user_id == owner.id
+    assert row.changed_at is not None
 
 
 @requires_db

@@ -11,4 +11,9 @@ abstract class AdminClientsRepository {
   });
 
   Future<Result<List<AdminClientAppointment>>> listClientAppointments(String userId);
+
+  Future<Result<AdminClientAppointment>> voidAppointment({
+    required String appointmentId,
+    required String reason,
+  });
 }

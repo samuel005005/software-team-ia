@@ -59,6 +59,7 @@ FACTORY_MODEL_CHEAP=composer-2.5-fast   # tareas muy simples (--tier cheap)
 python -m factory pending              # ver tareas [ ]
 
 python -m factory run                  # autopilot: todas las pendientes
+python -m factory run next             # siguiente tarea (alias)
 python -m factory run --once           # solo la siguiente
 python -m factory run --max 3          # límite de tareas por corrida
 python -m factory run T-060            # una tarea (analizar + crear + probar)

@@ -28,4 +28,15 @@ class AdminClientsRemoteDataSource extends RemoteDataSource {
     );
     return AdminClientAppointmentListResponseDto.fromJson(response.data!);
   }
+
+  Future<AdminClientAppointmentDto> voidAppointment(
+    String appointmentId,
+    VoidAdminAppointmentRequestDto request,
+  ) async {
+    final response = await dio.patch<Map<String, dynamic>>(
+      '/admin/appointments/$appointmentId/void',
+      data: request.toJson(),
+    );
+    return AdminClientAppointmentDto.fromJson(response.data!);
+  }
 }

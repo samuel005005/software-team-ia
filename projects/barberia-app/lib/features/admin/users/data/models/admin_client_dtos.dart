@@ -120,3 +120,11 @@ class AdminClientAppointmentListResponseDto {
 
   final List<AdminClientAppointmentDto> items;
 }
+
+class VoidAdminAppointmentRequestDto {
+  const VoidAdminAppointmentRequestDto({required this.reason});
+
+  final String reason;
+
+  Map<String, dynamic> toJson() => {'reason': reason};
+}

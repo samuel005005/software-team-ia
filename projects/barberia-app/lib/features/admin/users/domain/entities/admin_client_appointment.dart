@@ -14,4 +14,13 @@ class AdminClientAppointment {
   final DateTime scheduledEnd;
   final String serviceName;
   final String barberDisplayName;
+
+  static const _voidableStatuses = {
+    'pendiente',
+    'confirmada',
+    'en_progreso',
+    'no_show',
+  };
+
+  bool canBeVoidedByAdmin() => _voidableStatuses.contains(status);
 }

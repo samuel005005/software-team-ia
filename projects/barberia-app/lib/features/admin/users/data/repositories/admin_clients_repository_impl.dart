@@ -47,4 +47,22 @@ class AdminClientsRepositoryImpl implements AdminClientsRepository {
       error: (failure) => Error(failure),
     );
   }
+
+  @override
+  Future<Result<AdminClientAppointment>> voidAppointment({
+    required String appointmentId,
+    required String reason,
+  }) async {
+    final result = await _remote.execute(
+      () => _remote.voidAppointment(
+        appointmentId,
+        VoidAdminAppointmentRequestDto(reason: reason),
+      ),
+    );
+
+    return result.when(
+      success: (dto) => Success(dto.toEntity()),
+      error: (failure) => Error(failure),
+    );
+  }
 }

@@ -7,23 +7,104 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
-- `PATCH /api/v1/appointments/{id}/cancel` — cancelación de citas por cliente con regla de 2 horas (US-006)
-- `CancelAppointmentUseCase`, política de dominio `cancellation.py` y errores de cancelación en backend
-- `cancellation_notice_hours` en `Settings` (default 2, override vía `CANCELLATION_NOTICE_HOURS`)
-- Flutter: `CancelAppointmentUseCase`, botón «Cancelar cita» en `AppointmentTile` con diálogo y snackbar
-- `AppointmentSummary.canBeCancelledByClient()` — pre-check UI de elegibilidad
-- Tests: `test_cancel_appointment.py`, `cancel_appointment_test.dart`
+- Anulación de cita por admin con motivo — `PATCH /admin/appointments/{id}/void` (US-019, T-064)
+- `VoidAppointmentUseCase`, `is_admin_voidable_status()`, `AuditLogRepository.log_appointment_voided()`
+- Flutter: acción «Anular cita» en diálogo de citas del cliente (admin) con campo motivo obligatorio
+- `VoidAdminAppointmentUseCase`, `canBeVoidedByAdmin()` en entidad admin
+- Tests: `test_void_appointment.py` (19) · `void_admin_appointment_test.dart` (6) · guard admin void en role guards
+- Historial unificado en cancelación cliente — `appointment_status_history` al cancelar (US-012, T-063)
+- Tests: `test_cancel_records_status_history` (parametrizado) · transiciones encadenadas barbero
+- `PATCH /api/v1/barber/appointments/{id}/status` — cambio de estado por barbero (US-012, T-062)
+- `UpdateBarberAppointmentStatusUseCase`, matriz `status_transitions.py`, errores de dominio
+- Persistencia atómica en `appointment_status_history` al cambiar estado desde agenda
+- Flutter: acciones contextuales en `ScheduleAppointmentTile` (Confirmar, Iniciar, Completar, No asistió)
+- `allowedBarberActions`, `UpdateBarberAppointmentStatusUseCase` y provider de actualización
+- Tests: `test_barber_appointment_status.py` (14) · `appointment_status_actions_test.dart` (8)
+- Flutter: pantalla `/barber/schedule` — agenda diaria del barbero (US-011, T-061)
+- `BarberSchedulePage`, `GetBarberScheduleUseCase`, DTOs y providers de agenda
+- Navegación por día: Hoy, Mañana, DatePicker, chevrons; pull-to-refresh
+- Tests: `barber_schedule_dtos_test.dart`, `barber_schedule_page_test.dart`
+- `GET /api/v1/barber/schedule` — agenda diaria/semanal del barbero con datos enriquecidos (US-011, T-060)
+- `ListMyBarberScheduleUseCase`, `BarberAppointmentRecord`, DTOs `BarberScheduleResponse`
+- `InvalidScheduleRangeError` — validación de rango de fechas (máx. 7 días)
+- Tests: `test_barber_schedule.py` (auth, campos, orden, aislamiento, rango, canceladas)
 
 ### Changed
-- `appointments.py` — endpoint cancel reemplaza stub `501` con flujo completo y manejo de errores HTTP
-- `appointment_repository.py` — métodos `get_by_id`, `cancel`, `to_detail_record`
-- `test_role_guards.py` — `test_appointments_cancel_requires_client`
+- `appointment_repository.py` — `_append_status_history()`; `cancel()` y `update_status()` comparten persistencia de historial
+- `ScheduleAppointmentTile` — de solo lectura a tile con acciones de estado e invalidate de agenda
+- `barber.py` — stub 501 reemplazado por endpoint real de cambio de estado (corrige QA-003)
+- `appointment_repository.py` — `update_status()`, `to_barber_record()`
+- `app_router.dart` — ruta `/barber/schedule` conectada a `BarberSchedulePage`
+- `appointment_repository.py` — `list_by_barber_for_date_range()` con join batch Service + ClientProfile
+- `barber.py` — endpoint schedule antes de rutas con path params
+- `test_role_guards.py` — `GET /barber/schedule` en `test_barber_routes_allow_barber`
 
-### Fixed
-- Test widget de cancelación — `Scaffold` en árbol para `ScaffoldMessenger.showSnackBar`
+---
 
-### Security
-- Cancelación restringida a rol `client`; cita ajena devuelve `404` (evita enumeración)
+## [2026-07-09] — Fase: Developer — T-064 (Anulación admin US-019)
+
+### Added
+- Backend: `PATCH /admin/appointments/{id}/void` con motivo obligatorio, historial y audit log
+- Flutter: diálogo de anulación en citas del cliente (panel admin)
+
+### Changed
+- `cancellation.py` — política `is_admin_voidable_status()` separada de cancelación cliente
+- Primer uso de `audit_logs` vía `AuditLogRepository`
+
+**Validación:** `pytest` (196) ✅ · `flutter test` (95) ✅
+
+---
+
+## [2026-07-09] — Fase: Developer — T-063 (Historial de cambios de estado)
+
+### Added
+- Backend: historial atómico en cancelación cliente vía `_append_status_history()`
+- Tests de historial en cancelación (pendiente/confirmada) y transiciones encadenadas barbero
+
+### Changed
+- `AppointmentRepository.cancel()` — requiere `changed_by_user_id`; soporta `cancellation_reason` para T-064
+- Punto único de escritura de historial para `update_status()` y `cancel()`
+
+**Validación:** `pytest` (176) ✅ · `flutter test` (89) ✅
+
+---
+
+## [2026-07-09] — Fase: Developer — T-062 (Gestión de estados, barbero)
+
+### Added
+- Backend: `PATCH /barber/appointments/{id}/status` con matriz de transiciones y historial
+- Flutter: botones de acción en tiles de agenda con confirmación y feedback visual
+
+### Changed
+- Agenda del barbero: de lectura a gestión operativa de estados de cita
+
+**Validación:** `pytest` (173) ✅ · `flutter test` (89) ✅
+
+---
+
+## [2026-07-09] — Fase: Developer — T-061 (Agenda del barbero, Flutter)
+
+### Added
+- Flutter: `BarberSchedulePage` con navegación diaria y tiles de cita (solo lectura)
+- Caso de uso `GetBarberScheduleUseCase` y capa data para `GET /barber/schedule`
+
+### Changed
+- Router: placeholder `/barber/schedule` reemplazado por pantalla real
+
+**Validación:** `flutter analyze` ✅ · `flutter test` (78) ✅
+
+---
+
+## [2026-07-09] — Fase: Developer — T-060 (Agenda del barbero, backend)
+
+### Added
+- Backend: `GET /barber/schedule` con filtro por fecha y rango semanal (≤ 7 días)
+- Caso de uso `ListMyBarberScheduleUseCase` y DTOs con `client_display_name`
+
+### Changed
+- Repositorio de citas extendido con listado enriquecido para barbero
+
+**Validación:** `pytest` (159) ✅
 
 ---
 

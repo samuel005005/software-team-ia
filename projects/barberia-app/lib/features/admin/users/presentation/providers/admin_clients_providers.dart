@@ -29,6 +29,10 @@ final listClientAppointmentsUseCaseProvider =
   return ListClientAppointmentsUseCase(ref.watch(adminClientsRepositoryProvider));
 });
 
+final voidAdminAppointmentUseCaseProvider = Provider<VoidAdminAppointmentUseCase>((ref) {
+  return VoidAdminAppointmentUseCase(ref.watch(adminClientsRepositoryProvider));
+});
+
 final adminClientsProvider = FutureProvider.autoDispose((ref) async {
   final result =
       await ref.watch(listAdminClientsUseCaseProvider).call(const NoParams());

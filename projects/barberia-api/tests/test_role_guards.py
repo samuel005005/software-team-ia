@@ -214,6 +214,18 @@ def test_appointments_cancel_requires_client(client, db_session) -> None:
 
 
 @requires_db
+def test_admin_void_requires_admin(client, db_session) -> None:
+    for role in (UserRole.CLIENT, UserRole.BARBER):
+        token, _ = _create_user_and_login(client, db_session, role=role)
+        response = client.patch(
+            f"/api/v1/admin/appointments/{uuid.uuid4()}/void",
+            headers=_auth(token),
+            json={"reason": "Emergencia operativa"},
+        )
+        assert response.status_code == 403
+
+
+@requires_db
 def test_barber_routes_reject_client(client) -> None:
     token, _ = _register_client(client)
     response = client.patch(
@@ -233,6 +245,14 @@ def test_barber_routes_allow_barber(client, db_session) -> None:
         json={"items": [{"weekday": 1, "start_time": "09:00:00", "end_time": "18:00:00", "is_active": True}]},
     )
     assert response.status_code == 200
+    response = client.get("/api/v1/barber/schedule", headers=_auth(token))
+    assert response.status_code == 200
+    response = client.patch(
+        f"/api/v1/barber/appointments/{uuid.uuid4()}/status",
+        headers=_auth(token),
+        json={"status": "en_progreso"},
+    )
+    assert response.status_code == 404
 
 
 @requires_db

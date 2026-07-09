@@ -708,11 +708,125 @@
 
 | ID | Tarea | Historia | Responsable | Estado |
 |----|-------|----------|-------------|--------|
-| T-060 | Implementar endpoint de agenda diaria/semanal del barbero | US-011 | Developer | `[ ]` |
-| T-061 | Implementar pantalla Flutter de agenda del barbero | US-011 | Developer | `[ ]` |
-| T-062 | Implementar cambios de estado de cita (`confirmada`, `en_progreso`, `completada`, `no_show`) | US-012 | Developer | `[ ]` |
-| T-063 | Registrar historial de cambios de estado | US-012 | Developer | `[ ]` |
-| T-064 | Implementar anulación de cita por admin con motivo | US-019 | Developer | `[ ]` |
+| T-060 | Implementar endpoint de agenda diaria/semanal del barbero | US-011 | Developer | `[x]` |
+| T-061 | Implementar pantalla Flutter de agenda del barbero | US-011 | Developer | `[x]` |
+| T-062 | Implementar cambios de estado de cita (`confirmada`, `en_progreso`, `completada`, `no_show`) | US-012 | Developer | `[x]` |
+| T-063 | Registrar historial de cambios de estado | US-012 | Developer | `[x]` |
+| T-064 | Implementar anulación de cita por admin con motivo | US-019 | Developer | `[x]` |
+
+### T-060 — Notas de implementación (2026-07-09)
+
+**Estado:** Completada  
+**Historia:** US-011 — Ver agenda diaria (backend)
+
+**Backend (`projects/barberia-api/`):**
+- `GET /api/v1/barber/schedule` operativo bajo `require_barber`
+- Query `date` (default: hoy en `business_timezone`) y `end_date` opcional (rango ≤ 7 días)
+- `ListMyBarberScheduleUseCase` + `InvalidScheduleRangeError` — validación de rango
+- `BarberAppointmentRecord` + `list_by_barber_for_date_range()` — join `Service` + `ClientProfile`, orden ASC por `scheduled_start`
+- DTOs `BarberScheduleResponse` / `BarberScheduleAppointmentResponse` con `client_display_name`
+- Incluye todos los estados (incl. `cancelada`); aislamiento por `barber_user_id`
+- Tests: `test_barber_schedule.py` (13 casos) · `test_role_guards.py` actualizado
+
+**Criterios SPEC cubiertos (backend):**
+- US-011: hora, cliente, servicio y estado en respuesta ✅ · orden cronológico ✅ · contrato HTTP para navegar por fecha (UI en T-061) ✅
+
+**Validación:** `pytest` (159) ✅
+
+**Siguiente tarea:** T-062 — cambios de estado de cita en agenda del barbero
+
+### T-061 — Notas de implementación (2026-07-09)
+
+**Estado:** Completada  
+**Historia:** US-011 — Ver agenda diaria (Flutter)
+
+**Flutter (`projects/barberia-app/`):**
+- Feature `barber_schedule/` extendido con capas domain/data/presentation para agenda diaria
+- `BarberSchedulePage` en `/barber/schedule` — reemplaza placeholder del router
+- Consumo de `GET /barber/schedule?date=YYYY-MM-DD` vía `GetBarberScheduleUseCase`
+- `ScheduleDateHeader` — navegación Hoy / Mañana / DatePicker / chevrons ±1 día
+- `ScheduleAppointmentTile` — hora, cliente, servicio, `AppointmentStatusChip` (solo lectura)
+- Estados UI: loading, error + reintentar, empty state, pull-to-refresh
+- Orden cronológico confiado al API (sin reordenar en cliente)
+- Tests: `barber_schedule_dtos_test.dart` (3) · `barber_schedule_page_test.dart` (5)
+
+**Criterios SPEC cubiertos:**
+- US-011: citas con hora, cliente, servicio y estado ✅ · orden cronológico ✅ · navegación entre días ✅
+
+**Validación:** `flutter analyze` ✅ · `flutter test` (78) ✅
+
+**Siguiente tarea:** T-062 — acciones de cambio de estado en tiles de agenda
+
+### T-062 — Notas de implementación (2026-07-09)
+
+**Estado:** Completada  
+**Historia:** US-012 — Gestionar estado de citas
+
+**Backend (`projects/barberia-api/`):**
+- `PATCH /api/v1/barber/appointments/{id}/status` operativo (reemplaza stub 501)
+- `UpdateBarberAppointmentStatusUseCase` + matriz `status_transitions.py` (ADR-2)
+- `InvalidStatusTransitionError`, `AppointmentNotUpdatableError` — errores de dominio
+- `AppointmentRepository.update_status()` — mutación atómica + fila en `appointment_status_history`
+- `no_show` solo si `now >= scheduled_start` (ADR-3); 404 anti-enumeración si cita ajena
+- Tests: `test_barber_appointment_status.py` (14 casos) · `test_role_guards.py` actualizado
+
+**Flutter (`projects/barberia-app/`):**
+- `allowedBarberActions` — helper de transiciones UI (paridad con backend)
+- `UpdateBarberAppointmentStatusUseCase` + PATCH en datasource/repository
+- `ScheduleAppointmentTile` — acciones contextuales, diálogos irreversibles, snackbar, invalidate
+- Tests: `appointment_status_actions_test.dart` (8) · `barber_schedule_page_test.dart` extendido (8)
+
+**Criterios SPEC cubiertos:**
+- US-012: `pendiente → confirmada → en_progreso → completada` ✅ · `no_show` ✅ · solo citas propias ✅ · historial registrado ✅
+
+**Validación:** `pytest` (173) ✅ · `flutter analyze` ✅ · `flutter test` (89) ✅
+
+**Siguiente tarea:** T-063 — extender historial a cancelación cliente y void admin
+
+### T-063 — Notas de implementación (2026-07-09)
+
+**Estado:** Completada  
+**Historia:** US-012 — Gestionar estado de citas (criterio: historial registrado)
+
+**Backend (`projects/barberia-api/`):**
+- `_append_status_history()` — punto único de escritura en `appointment_status_history` (ADR-T063-1)
+- `AppointmentRepository.cancel()` — registra historial con `changed_by_user_id`; acepta `cancellation_reason` opcional (contrato T-064)
+- `CancelAppointmentUseCase` — pasa `changed_by_user_id=client_user_id` al cancelar
+- Sin historial en `create()` — creación no es transición de estado (ADR-T063-2)
+- Tests: `test_cancel_records_status_history` (parametrizado pendiente/confirmada) · `test_chained_status_transitions_record_multiple_history_rows`
+
+**Criterios SPEC cubiertos:**
+- US-012: historial en transiciones barbero ✅ (T-062) · historial en cancelación cliente ✅ · contrato listo para void admin (T-064) ✅
+
+**Validación:** `pytest` (176) ✅ · `flutter analyze` ✅ · `flutter test` (89) ✅
+
+**Siguiente tarea:** T-064 — anulación de cita por admin con motivo
+
+### T-064 — Notas de implementación (2026-07-09)
+
+**Estado:** Completada  
+**Historia:** US-019 — Anular cita (admin)
+
+**Backend (`projects/barberia-api/`):**
+- `PATCH /api/v1/admin/appointments/{id}/void` operativo bajo `require_admin`
+- `VoidAppointmentUseCase` + `is_admin_voidable_status()` — estados `pendiente`, `confirmada`, `en_progreso`, `no_show`; motivo obligatorio (3–500 chars); sin ventana 2 h
+- Reutiliza `AppointmentRepository.cancel()` — estado terminal `cancelada`, historial y slot libre
+- `AuditLogRepository.log_appointment_voided()` — acción `appointment_voided` con motivo y `from_status`
+- Schema `VoidAppointmentRequest` · respuesta `AppointmentResponse`
+- Tests: `test_void_appointment.py` (19) · `test_role_guards.py::test_admin_void_requires_admin`
+
+**Flutter (`projects/barberia-app/`):**
+- `AdminClientAppointment.canBeVoidedByAdmin()` — paridad con política backend
+- `VoidAdminAppointmentUseCase` + PATCH en datasource/repository
+- `AdminClientAppointmentsDialog` — botón «Anular cita» con diálogo de motivo obligatorio
+- Tests: `void_admin_appointment_test.dart` (6)
+
+**Criterios SPEC cubiertos:**
+- US-019: anular cualquier cita previa a `completada` ✅ · motivo obligatorio ✅ · slot libre y visibilidad cliente/barbero ✅
+
+**Validación:** `pytest` (196) ✅ · `flutter analyze` ✅ · `flutter test` (95) ✅
+
+**Siguiente tarea:** T-070 — tests unitarios del dominio de reservas y cancelación
 
 ---
 
@@ -720,7 +834,7 @@
 
 | ID | Tarea | Responsable | Estado |
 |----|-------|-------------|--------|
-| T-070 | Tests unitarios del dominio de reservas y cancelación | Developer | `[ ]` |
+| T-070 | Tests unitarios del dominio de reservas y cancelación | Developer | `[~]` |
 | T-071 | Tests de integración backend para auth, disponibilidad y citas | Developer | `[ ]` |
 | T-072 | Tests básicos de frontend para login, listado de servicios y reserva | Developer | `[ ]` |
 | T-073 | Hardening de manejo de errores y estados vacíos en UI | Developer | `[ ]` |
@@ -731,7 +845,7 @@
 
 | ID | Tarea | Responsable | Estado |
 |----|-------|-------------|--------|
-| T-100 | Validación QA contra `docs/SPEC.md` | QA | `[ ]` |
+| T-100 | Validación QA contra `docs/SPEC.md` | QA | `[x]` |
 | T-101 | Revisar bugs encontrados y repriorizar | Product Manager / Architect | `[ ]` |
 | T-102 | Code review técnico de MVP | Reviewer | `[ ]` |
 | T-103 | Security audit básico | Security | `[ ]` |
@@ -780,7 +894,10 @@ Para una primera entrega funcional, el orden recomendado es:
 
 | ID | Tarea | Motivo | Desde |
 |----|-------|--------|-------|
-| — | — | Sin bloqueos activos | — |
+| ~~B-001~~ | ~~T-104 (entrega MVP)~~ | ~~US-012 sin implementar (QA-001)~~ — **Resuelto en T-062/T-063** | 2026-07-09 |
+| ~~B-002~~ | ~~T-104 (entrega MVP)~~ | ~~US-019 sin implementar (QA-002)~~ — **Resuelto en T-064** | 2026-07-09 |
+
+Sin bloqueos funcionales activos. T-104 pendiente de T-102 (code review) y T-103 (security audit).
 
 ---
 
@@ -789,3 +906,5 @@ Para una primera entrega funcional, el orden recomendado es:
 | Fecha | Autor | Cambio |
 |-------|-------|--------|
 | 2026-07-08 | Architect | Plan técnico inicial del MVP y fases de implementación |
+| 2026-07-09 | QA | Validación T-001..T-061 — veredicto CONDICIONAL; bloqueos B-001/B-002 por US-012 y US-019 |
+| 2026-07-09 | QA | Re-validación T-062..T-064 — veredicto APROBADO; MVP funcional completo (17/17 historias) |

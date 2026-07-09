@@ -3,8 +3,16 @@ from pathlib import Path
 
 from factory.models import TaskItem, TaskStatus
 
-TASK_ROW = re.compile(
-    r"^\|\s*(T-\d+)\s*\|\s*(.+?)\s*\|\s*([^|]*?)\s*\|\s*([^|]*?)\s*\|\s*`(\[[ x~!]\])`\s*\|"
+STATUS_TOKEN = r"`(\[[ x~!]\])`"
+
+# 5 columnas: | T-040 | Título | US-003 | Developer | `[x]` |
+TASK_ROW_5COL = re.compile(
+    rf"^\|\s*(T-\d+)\s*\|\s*(.+?)\s*\|\s*([^|]*?)\s*\|\s*([^|]*?)\s*\|\s*{STATUS_TOKEN}\s*\|"
+)
+
+# 4 columnas: | T-001 | Título | Developer | `[x]` |
+TASK_ROW_4COL = re.compile(
+    rf"^\|\s*(T-\d+)\s*\|\s*(.+?)\s*\|\s*([^|]*?)\s*\|\s*{STATUS_TOKEN}\s*\|"
 )
 
 _STATUS_MAP = {
@@ -15,19 +23,34 @@ _STATUS_MAP = {
 }
 
 
+def _parse_task_row(line: str) -> tuple[str, str, str | None, str, str] | None:
+    stripped = line.strip()
+    match_5 = TASK_ROW_5COL.match(stripped)
+    if match_5:
+        task_id, title, story, owner, status_token = match_5.groups()
+        return task_id, title, story.strip() or None, owner.strip(), status_token
+
+    match_4 = TASK_ROW_4COL.match(stripped)
+    if match_4:
+        task_id, title, owner, status_token = match_4.groups()
+        return task_id, title, None, owner.strip(), status_token
+
+    return None
+
+
 def parse_tasks(tasks_md: str) -> list[TaskItem]:
     items: list[TaskItem] = []
     for index, line in enumerate(tasks_md.splitlines(), start=1):
-        match = TASK_ROW.match(line.strip())
-        if not match:
+        parsed = _parse_task_row(line)
+        if parsed is None:
             continue
-        task_id, title, story, owner, status_token = match.groups()
+        task_id, title, story, owner, status_token = parsed
         items.append(
             TaskItem(
                 task_id=task_id,
                 title=title.strip(),
-                story=story.strip() or None,
-                owner=owner.strip(),
+                story=story,
+                owner=owner,
                 status=_STATUS_MAP[status_token],
                 line_number=index,
             )
