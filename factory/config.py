@@ -5,6 +5,7 @@ from factory.models import FactoryRole, ModelTier
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DOCS_DIR = REPO_ROOT / "docs"
+PROJECTS_DIR = REPO_ROOT / "projects"
 PROMPTS_DIR = REPO_ROOT / "prompts"
 RULES_DIR = REPO_ROOT / ".cursor" / "rules"
 SKILLS_DIR = REPO_ROOT / ".cursor" / "skills"

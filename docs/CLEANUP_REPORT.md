@@ -38,7 +38,7 @@
 
 | Elemento | Motivo |
 |----------|--------|
-| `projects/barberia-app/` | Proyecto de ejemplo |
+| `projects/` | Código fuente de productos (añadir por proyecto) |
 | `.gitignore` | Control de versiones |
 | Historial Git | Commit de respaldo antes de limpieza |
 
@@ -114,7 +114,7 @@ software-team-ai/
 │   ├── review_project.md
 │   └── security_audit.md
 ├── projects/               # Proyectos generados
-│   └── barberia-app/
+│   └── README.md          # Guía para añadir proyectos
 ├── README.md
 └── README_AI_WORKFLOW.md
 ```

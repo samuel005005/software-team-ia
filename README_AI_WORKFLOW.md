@@ -47,7 +47,7 @@ Usa la skill flutter_feature para implementar T-030 según TASKS.md
 ## Flujo: Proyecto nuevo (ejemplo completo)
 
 ### 1. Preparar documentación
-Copia `docs/templates/*.template.md` a `docs/` y adapta al proyecto (o usa los `docs/` existentes para Barbería App).
+Copia `docs/templates/*.template.md` a `docs/` y adapta al proyecto, o edita los `docs/` existentes si ya están inicializados.
 
 ### 2. Product Manager
 ```
@@ -137,16 +137,16 @@ Veredictos en `QA_REPORT.md`, `REVIEW.md`, `SECURITY_REPORT.md`.
 
 ---
 
-## Ejemplo: Barbería App
+## Ejemplo: flujo típico
 
 ```
-1. SPEC.md     — citas, clientes, barberos, admin (ya definido)
-2. ARCHITECTURE — Flutter + Riverpod + GoRouter + FastAPI + PostgreSQL
-3. T-001       — base arquitectónica Flutter
-4. T-002…      — auth, citas, servicios (incremental)
-5. QA_REPORT   — validar US-001, RN-01…
-6. REVIEW      — Clean Architecture, tests
-7. SECURITY    — JWT, roles, validación inputs
+1. SPEC.md       — historias de usuario y criterios de aceptación
+2. ARCHITECTURE  — stack, carpetas, módulos
+3. T-001…        — tareas incrementales en TASKS.md
+4. projects/     — código en projects/<nombre>/
+5. QA_REPORT     — validar US y reglas de negocio
+6. REVIEW        — calidad y arquitectura
+7. SECURITY      — auditoría básica
 ```
 
 ---

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from factory.config import DOCS_DIR, PROMPTS_DIR, RULES_DIR
+from factory.config import DOCS_DIR, PROMPTS_DIR, PROJECTS_DIR, RULES_DIR
 from factory.models import FactoryRole, TaskItem
 from factory.spec_parser import extract_user_stories, parse_story_ids
 
@@ -28,9 +28,10 @@ No saltes pasos. Todo parte del **requerimiento** (SPEC + historia de usuario).
 3. Cambios mínimos; una tarea = un incremento acotado.
 
 ### Fase 3 — PROBAR (validación)
-1. Ejecuta tests:
-   - Backend: `cd projects/barberia-api && pytest`
-   - Flutter: `cd projects/barberia-app && flutter analyze && flutter test`
+1. Ejecuta tests del stack definido en `docs/ARCHITECTURE.md`, por ejemplo:
+   - Backend Python: `cd projects/<api> && pytest`
+   - Flutter: `cd projects/<app> && flutter analyze && flutter test`
+   - Node: `cd projects/<api> && npm test`
 2. Verifica **cada criterio de aceptación** de la US contra lo implementado.
 3. Si algo falla, corrige antes de cerrar la tarea.
 
@@ -152,6 +153,18 @@ ANALYZE_ONLY_WORKFLOW = """
 """
 
 
+def _projects_context() -> str:
+    if not PROJECTS_DIR.is_dir():
+        return "- Carpeta `projects/` no encontrada"
+    entries = sorted(
+        p.name for p in PROJECTS_DIR.iterdir() if p.is_dir() and not p.name.startswith(".")
+    )
+    if not entries:
+        return "- `projects/` vacío — crear el código según ARCHITECTURE.md (ver projects/README.md)"
+    lines = [f"- `projects/{name}/`" for name in entries]
+    return "\n".join(lines)
+
+
 def build_analyze_prompt(task: TaskItem) -> str:
     rule = _read_rule(FactoryRole.ARCHITECT)
     sections = [
@@ -170,7 +183,7 @@ def build_analyze_prompt(task: TaskItem) -> str:
         "",
         "## Contexto del repo",
         f"- Raíz: {DOCS_DIR.parent}",
-        "- Proyectos: projects/barberia-app, projects/barberia-api",
+        _projects_context(),
     ]
     return "\n".join(sections)
 
@@ -229,7 +242,7 @@ def build_role_prompt(
             "",
             "## Contexto del repo",
             f"- Raíz: {DOCS_DIR.parent}",
-            "- Proyectos: projects/barberia-app, projects/barberia-api",
+            _projects_context(),
         ]
     )
 

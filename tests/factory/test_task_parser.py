@@ -63,12 +63,9 @@ def test_next_pending_task_4_columns(tmp_path: Path) -> None:
     assert task.task_id == "T-070"
 
 
-def test_load_real_tasks_md_includes_phase_7() -> None:
+def test_load_real_tasks_md_parses_placeholder() -> None:
     path = Path(__file__).resolve().parents[2] / "docs" / "TASKS.md"
     tasks = load_tasks(path)
-    ids = [t.task_id for t in tasks]
-    assert "T-001" in ids
-    assert "T-070" in ids
-    assert "T-073" in ids
-    pending = [t.task_id for t in tasks if t.status == TaskStatus.PENDING]
-    assert pending[0] == "T-070"
+    assert len(tasks) >= 1
+    assert tasks[0].task_id == "T-001"
+    assert tasks[0].status == TaskStatus.PENDING

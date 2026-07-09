@@ -12,17 +12,15 @@
 
 | Historia | Estado | Notas |
 |----------|--------|-------|
-|          |        |       |
 
 ### Bugs
 
 | ID | Severidad | Descripción | Estado |
 |----|-----------|-------------|--------|
-|    |           |             |        |
 
 ### Veredicto QA
 
-`APROBADO` / `RECHAZADO` / `CONDICIONAL`
+`PENDIENTE`
 
 ---
 
@@ -30,40 +28,32 @@
 
 ### Resumen
 
-### Issues
+### Hallazgos
 
 | # | Severidad | Archivo | Descripción |
 |---|-----------|---------|-------------|
-|   |           |         |             |
 
 ### Veredicto Review
 
-`APROBADO` / `CAMBIOS REQUERIDOS`
+`PENDIENTE`
 
 ---
 
 ## Security Audit — [Fecha]
 
-### Resumen ejecutivo
+### Resumen
 
 ### Hallazgos
 
 | ID | Severidad | Ubicación | Descripción | Mitigación |
 |----|-----------|-----------|-------------|------------|
-|    |           |           |             |            |
 
 ### Veredicto Security
 
-`SEGURO` / `RIESGOS` / `INSEGURO`
+`PENDIENTE`
 
 ---
 
 ## Veredicto final de entrega
 
-| Fase | Veredicto | Fecha |
-|------|-----------|-------|
-| QA | | |
-| Review | | |
-| Security | | |
-
-**Estado del proyecto:** `LISTO PARA ENTREGA` / `REQUIERE CORRECCIONES`
+`PENDIENTE`

@@ -18,24 +18,9 @@ __pycache__/
 Thumbs.db
 *.log
 
-# Flutter (proyectos bajo projects/)
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.packages
-.pub-cache/
-.pub/
-build/
-coverage/
-
-# Proyectos generados (contenido, no la carpeta)
-projects/*
-
-# Mantener ejemplo
-!projects/barberia-app/
-!projects/barberia-app/**
-!projects/barberia-api/
-!projects/barberia-api/**
+# Flutter build artifacts (en cualquier proyecto bajo projects/)
+**/build/
+**/.dart_tool/
 
 # Factory metadata
 .factory/

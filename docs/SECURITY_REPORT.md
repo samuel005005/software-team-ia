@@ -1,9 +1,41 @@
-# Security Report — Barbería App
+# Security Report — [Nombre del proyecto]
 
-> Pendiente de ejecución por Security Agent. Usar plantilla: `docs/templates/SECURITY_REPORT.template.md`
+**Fecha:** YYYY-MM-DD  
+**Versión / commit:**  
+**Responsable:** Security Agent
 
-**Estado:** No iniciado
+## Resumen ejecutivo
+
+_Pendiente de primera auditoría._
+
+## Alcance auditado
+
+## Hallazgos
+
+| ID | Severidad | Ubicación | Descripción | Impacto | Mitigación |
+|----|-----------|-----------|-------------|---------|------------|
+
+## Autenticación y autorización
+
+## Manejo de secretos
+
+## Validación de inputs
+
+## Dependencias revisadas
+
+## Checklist
+
+- [ ] Sin secretos en el repositorio
+- [ ] Autenticación y roles correctamente implementados
+- [ ] Inputs validados y sanitizados
+- [ ] Datos sensibles no expuestos en logs o respuestas
+- [ ] HTTPS/TLS donde aplica
+- [ ] Dependencias sin CVEs críticos conocidos
 
 ## Veredicto
 
-_Pendiente_
+**PENDIENTE**
+
+## Acciones inmediatas
+
+1. 
