@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     business_timezone: str = "America/Santo_Domingo"
+    cancellation_notice_hours: int = 2
 
     @property
     def cors_origin_list(self) -> list[str]:

@@ -7,24 +7,49 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 ## [Unreleased]
 
 ### Added
-- Feature Flutter `client_booking/` — wizard de reserva de cita (US-004, US-005)
-- `BookAppointmentPage` — flujo servicio → barbero → fecha/hora → confirmar en `/book-appointment`
-- Integración API: `GET /barbers`, `GET /availability`, `POST /appointments`
-- Pantalla de confirmación con resumen de cita (`confirmada`)
-- CTA «Reservar» en catálogo de servicios con pre-selección `?serviceId=`
-- Tests: `booking_dtos_test.dart`, `book_appointment_page_test.dart`
+- `PATCH /api/v1/appointments/{id}/cancel` — cancelación de citas por cliente con regla de 2 horas (US-006)
+- `CancelAppointmentUseCase`, política de dominio `cancellation.py` y errores de cancelación en backend
+- `cancellation_notice_hours` en `Settings` (default 2, override vía `CANCELLATION_NOTICE_HOURS`)
+- Flutter: `CancelAppointmentUseCase`, botón «Cancelar cita» en `AppointmentTile` con diálogo y snackbar
+- `AppointmentSummary.canBeCancelledByClient()` — pre-check UI de elegibilidad
+- Tests: `test_cancel_appointment.py`, `cancel_appointment_test.dart`
 
 ### Changed
-- `app_router.dart` — ruta `/book-appointment` conectada a `BookAppointmentPage`
-- `services_page.dart` — botón de reserva por servicio
-- `app.dart` — delegados de localización para date picker en español
-- `pubspec.yaml` — dependencias `intl`, `flutter_localizations`
+- `appointments.py` — endpoint cancel reemplaza stub `501` con flujo completo y manejo de errores HTTP
+- `appointment_repository.py` — métodos `get_by_id`, `cancel`, `to_detail_record`
+- `test_role_guards.py` — `test_appointments_cancel_requires_client`
 
 ### Fixed
-- 
+- Test widget de cancelación — `Scaffold` en árbol para `ScaffoldMessenger.showSnackBar`
 
 ### Security
-- 
+- Cancelación restringida a rol `client`; cita ajena devuelve `404` (evita enumeración)
+
+---
+
+## [2026-07-08] — Fase: Developer — T-056 (Cancelación de citas)
+
+### Added
+- Backend: endpoint PATCH cancel con validaciones RN-07, RN-08, RN-09
+- Flutter: acción cancelar en historial con confirmación y feedback
+
+### Changed
+- Slot liberado automáticamente al pasar a `cancelada` (constraint EXCLUDE existente)
+
+**Validación:** `pytest` (146) ✅ · `flutter analyze` ✅ · `flutter test` (70) ✅
+
+---
+
+## [2026-07-08] — Fase: Developer — T-055 (Historial de citas del cliente)
+
+### Added
+- Backend: endpoint de listado con orden futuras → pasadas
+- Flutter: feature completo con empty state, error/reintentar y pull-to-refresh
+
+### Changed
+- Placeholder `/appointments` reemplazado por pantalla real de historial
+
+**Validación:** `pytest` ✅ · `flutter analyze` ✅ · `flutter test` (61) ✅
 
 ---
 

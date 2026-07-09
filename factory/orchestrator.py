@@ -7,7 +7,13 @@ from factory.models import FactoryRole, ModelTier, RunResult, TaskItem, TaskStat
 from factory.progress import ProgressReporter
 from factory.prompt_builder import build_analyze_prompt, build_role_prompt
 from factory.state_store import append_run
-from factory.task_parser import load_tasks, mark_task_status, next_pending_task
+from factory.task_parser import (
+    list_actionable_tasks,
+    load_tasks,
+    mark_task_status,
+    next_actionable_task,
+    next_pending_task,
+)
 
 TASKS_PATH = DOCS_DIR / "TASKS.md"
 
@@ -176,6 +182,79 @@ class SDDOrchestrator:
         )
         results.append(dev_result)
         return results
+
+    def run_all(
+        self,
+        *,
+        max_tasks: int | None = None,
+        stop_on_error: bool = True,
+        skip_analyze_if_exists: bool = True,
+    ) -> list[RunResult]:
+        """Ejecuta analyze + implement para todas las tareas pendientes/en progreso."""
+        all_results: list[RunResult] = []
+        completed_count = 0
+        attempted: set[str] = set()
+
+        while True:
+            task = next_actionable_task(self._tasks_path, exclude=attempted)
+            if task is None:
+                if completed_count == 0 and not attempted:
+                    self._progress.info("No hay tareas pendientes ni en progreso.")
+                else:
+                    self._progress.success(
+                        f"Autopilot terminado — {completed_count} tarea(s) procesada(s)."
+                    )
+                break
+
+            if max_tasks is not None and completed_count >= max_tasks:
+                self._progress.info(f"Límite alcanzado (--max {max_tasks}).")
+                break
+
+            attempted.add(task.task_id)
+
+            self._progress.phase(
+                f"Autopilot [{completed_count + 1}"
+                + (f"/{max_tasks}" if max_tasks else "")
+                + f"]: {task.task_id} — {task.title}"
+            )
+
+            skip_analyze = skip_analyze_if_exists and analysis_path(task.task_id).exists()
+            batch = self.run_full_task(
+                task.task_id,
+                mark_in_progress=True,
+                skip_analyze=skip_analyze,
+            )
+            all_results.extend(batch)
+            completed_count += 1
+
+            if stop_on_error and any(r.status == "error" for r in batch):
+                self._progress.error(f"Detenido en {task.task_id} por error.")
+                break
+
+        return all_results
+
+    def run_next_full(
+        self,
+        *,
+        skip_analyze_if_exists: bool = True,
+    ) -> list[RunResult]:
+        """Una sola tarea: la siguiente pendiente o en progreso."""
+        task = next_actionable_task(self._tasks_path)
+        if task is None:
+            return [
+                RunResult(
+                    role=FactoryRole.DEVELOPER,
+                    task_id=None,
+                    status="no_tasks",
+                    agent_id=None,
+                    summary="No hay tareas pendientes ni en progreso.",
+                )
+            ]
+        skip_analyze = skip_analyze_if_exists and analysis_path(task.task_id).exists()
+        return self.run_full_task(
+            task.task_id,
+            skip_analyze=skip_analyze,
+        )
 
     def run_pipeline(
         self,

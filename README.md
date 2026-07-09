@@ -1,16 +1,23 @@
 # Software Factory — Cursor AI Team
 
-Repositorio de **fábrica de software** para desarrollo asistido por IA con Cursor. Usa **Agent Mode**, **Rules** y **Skills**; opcionalmente el **orquestador automático** (`factory/`) vía Cursor SDK.
+Repositorio de **fábrica de software** para desarrollo asistido por IA con Cursor. Combina **Spec-Driven Development (SDD)** con roles, skills y un **orquestador automático** (`factory/`) sobre Cursor SDK.
+
+## Qué es esto
+
+| Modo | Cuándo usarlo |
+|------|----------------|
+| **Cursor manual** | Agent Mode + rules/skills + prompts en el IDE |
+| **Orquestador `factory`** | Automatizar tareas de `docs/TASKS.md` desde terminal |
+
+Ambos comparten la misma metodología: `SPEC` → `ARCHITECTURE` → `TASKS` → código en `projects/`.
 
 ## Metodología
 
-- **Spec-Driven Development (SDD)**
+- **Spec-Driven Development (SDD)** — el requerimiento manda
 - **Clean Architecture** y **SOLID**
-- **Design Patterns** cuando aporten valor
-- Desarrollo incremental por tareas
-- Revisiones de calidad (QA, Review, Security)
-
-## Flujo del equipo
+- Desarrollo incremental por tareas (`T-XXX`)
+- Flujo por requerimiento: **Analizar → Crear → Probar**
+- Revisiones: QA, Review, Security
 
 ```
 PM → Architect → Developer → QA → Reviewer → Security
@@ -18,53 +25,103 @@ PM → Architect → Developer → QA → Reviewer → Security
 
 ## Inicio rápido
 
+### 1. Manual (Cursor IDE)
+
 1. [README_AI_WORKFLOW.md](README_AI_WORKFLOW.md) — guía operativa
 2. [docs/SOFTWARE_FACTORY_WORKFLOW.md](docs/SOFTWARE_FACTORY_WORKFLOW.md) — fases detalladas
 3. Proyecto nuevo → `prompts/new_project.md` + rule `@product_manager`
-4. Proyecto existente → skill `project_analysis` + `prompts/analyze_existing_project.md`
+4. Proyecto existente → skill `project_analysis`
 
-### Orquestador automático (opcional)
+### 2. Orquestador automático
+
+**Requisitos:** Python 3.11+, [Cursor Desktop](https://cursor.com) abierto, API key.
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements-factory.txt
-export CURSOR_API_KEY=...   # cursor.com → Settings → API
 
-python -m factory pending          # tareas pendientes
-python -m factory run T-051        # analizar + implementar + probar (recomendado)
-python -m factory analyze T-051    # solo análisis
-python -m factory task T-051       # solo implementación
+cp .env.example .env   # añade CURSOR_API_KEY
+export $(grep -v '^#' .env | xargs)
+```
+
+**Modelos por tier** (en `.env`):
+
+```bash
+FACTORY_MODEL_SMART=composer-2.5        # análisis / arquitectura
+FACTORY_MODEL_FAST=composer-2.5-fast    # implementación normal
+FACTORY_MODEL_CHEAP=composer-2.5-fast   # tareas muy simples (--tier cheap)
+```
+
+**Comandos principales:**
+
+```bash
+python -m factory pending              # ver tareas [ ]
+
+python -m factory run                  # autopilot: todas las pendientes
+python -m factory run --once           # solo la siguiente
+python -m factory run --max 3          # límite de tareas por corrida
+python -m factory run T-060            # una tarea (analizar + crear + probar)
+
+python -m factory analyze T-060        # solo análisis (smart)
+python -m factory task T-060 --use-analysis   # solo implementar (fast)
+
+python -m factory role qa              # validación formal
 python -m factory pipeline --max-tasks 1 --review --security
 ```
 
+Cada `factory run` ejecuta:
+
+1. **Análisis** (modelo smart) → `.factory/analysis/T-XXX.md`
+2. **Implementar + probar** (modelo fast) → código + tests + docs
+
 Guía completa: [docs/ORCHESTRATOR.md](docs/ORCHESTRATOR.md)
+
+## Proyecto activo: Barbería App
+
+| Proyecto | Stack | Puerto dev |
+|----------|-------|------------|
+| `projects/barberia-app/` | Flutter, Riverpod, GoRouter | — |
+| `projects/barberia-api/` | FastAPI, SQLAlchemy, PostgreSQL | **8001** (API), **5433** (DB) |
+
+```bash
+# Backend
+cd projects/barberia-api && make up && make migrate && make api
+
+# Tests
+cd projects/barberia-api && pytest
+cd projects/barberia-app && flutter test
+```
+
+Documentación del producto: `docs/SPEC.md`, `docs/ARCHITECTURE.md`, `docs/TASKS.md`.
 
 ## Estructura del repositorio
 
 ```
-factory/            # Orquestador SDD (Cursor SDK) — python -m factory
+factory/                 # Orquestador SDD (python -m factory)
 .cursor/
-├── rules/          # Roles: PM, Architect, Developer, QA, Reviewer, Security
-└── skills/         # Workflows: flutter_feature, backend_feature, testing, etc.
+├── rules/               # PM, Architect, Developer, QA, Reviewer, Security
+└── skills/              # flutter_feature, backend_feature, testing, …
 
 docs/
-├── SPEC.md              # Especificación (PM)
-├── ARCHITECTURE.md      # Arquitectura (Architect)
-├── TASKS.md             # Plan de tareas
-├── CHANGELOG.md         # Historial de cambios
-├── QA_REPORT.md         # Reporte QA
-├── REVIEW.md            # Code review
-├── SECURITY_REPORT.md   # Auditoría de seguridad
-├── templates/           # Plantillas para nuevos proyectos
+├── SPEC.md              # Especificación funcional
+├── ARCHITECTURE.md      # Arquitectura técnica
+├── TASKS.md             # Plan de tareas (fuente de verdad del progreso)
+├── CHANGELOG.md
+├── QA_REPORT.md
+├── ORCHESTRATOR.md
 └── SOFTWARE_FACTORY_WORKFLOW.md
 
-prompts/            # Prompts copiables en Cursor Agent Mode
-projects/           # Proyectos de software (ej. barberia-app)
+prompts/                 # Prompts para Cursor Agent Mode
+projects/
+├── barberia-app/        # Frontend Flutter
+└── barberia-api/        # Backend REST
 ```
 
 ## Roles y documentos
 
-| Rule | Documento principal |
-|------|---------------------|
+| Rule | Documento |
+|------|-----------|
 | `product_manager` | `docs/SPEC.md` |
 | `architect` | `docs/ARCHITECTURE.md`, `docs/TASKS.md` |
 | `developer` | `projects/` |
@@ -76,10 +133,9 @@ projects/           # Proyectos de software (ej. barberia-app)
 
 `project_analysis` · `feature_design` · `flutter_feature` · `backend_feature` · `database_change` · `bug_fix` · `refactor` · `testing` · `code_review` · `security_audit`
 
-## Proyecto de ejemplo
+## Enlaces útiles
 
-`projects/barberia-app/` — Barbería App (Flutter), con SPEC y arquitectura en `docs/`.
-
-## Historial
-
-Framework Python de agentes eliminado en favor de metodología Cursor-only. Backup: commit `63891e5`. Detalle: [docs/CLEANUP_REPORT.md](docs/CLEANUP_REPORT.md).
+- [README_AI_WORKFLOW.md](README_AI_WORKFLOW.md) — workflow operativo
+- [docs/ORCHESTRATOR.md](docs/ORCHESTRATOR.md) — orquestador y modelos
+- [docs/SOFTWARE_FACTORY_WORKFLOW.md](docs/SOFTWARE_FACTORY_WORKFLOW.md) — metodología SDD
+- [docs/CLEANUP_REPORT.md](docs/CLEANUP_REPORT.md) — migración Cursor-only (backup commit `63891e5`)

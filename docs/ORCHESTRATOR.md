@@ -18,7 +18,10 @@ python -m factory pending
 python -m factory next
 
 # TODO EN UNO: analizar + implementar + probar
-python -m factory run T-051
+python -m factory run T-051          # una tarea
+python -m factory run                # TODAS las pendientes (autopilot)
+python -m factory run --once         # solo la siguiente
+python -m factory run --max 3        # máximo 3 tareas
 
 # Solo análisis (smart) o solo implementación (fast)
 python -m factory analyze T-051
@@ -69,7 +72,17 @@ Solo marca `[x]` en `TASKS.md` si la Fase 3 pasa.
 ### Comando único (recomendado)
 
 ```bash
+# Una tarea
 python -m factory run T-051
+
+# Autopilot: todas las pendientes / en progreso (sin especificar ID)
+python -m factory run
+
+# Solo la siguiente
+python -m factory run --once
+
+# Límite de seguridad
+python -m factory run --max 5
 ```
 
 Ejecuta en secuencia:

@@ -1,8 +1,10 @@
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from app.domain.appointments.sorting import sort_client_appointments
 from app.domain.users.errors import ClientNotFoundError
 from app.infrastructure.repositories.appointment_repository import (
     AppointmentRepository,
@@ -57,4 +59,5 @@ class ListClientAppointmentsUseCase:
         if user is None:
             raise ClientNotFoundError()
 
-        return self._appointments.list_by_client(client_user_id)
+        raw = self._appointments.list_by_client(client_user_id)
+        return sort_client_appointments(raw, datetime.now(timezone.utc))

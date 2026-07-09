@@ -8,6 +8,7 @@ import '../../features/barber_schedule/presentation/pages/barber_availability_pa
 import '../../features/admin/barbers/presentation/pages/admin_barbers_page.dart';
 import '../../features/admin/services/presentation/pages/admin_services_page.dart';
 import '../../features/admin/users/presentation/pages/admin_users_page.dart';
+import '../../features/appointments/presentation/pages/appointments_page.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/profile/presentation/pages/profile_page.dart';
@@ -79,8 +80,7 @@ GoRouter createAppRouter(Ref ref) {
           GoRoute(
             path: AppRoutes.appointments,
             name: 'appointments',
-            builder: (context, state) =>
-                shellPlaceholder('Mis citas', 'appointments'),
+            builder: (context, state) => const AppointmentsPage(),
           ),
           GoRoute(
             path: AppRoutes.profile,

@@ -187,11 +187,30 @@ def test_appointments_list_requires_authentication(client) -> None:
 
 
 @requires_db
-def test_appointments_list_allows_any_role(client, db_session) -> None:
-    for role in (UserRole.CLIENT, UserRole.BARBER, UserRole.ADMIN):
+def test_appointments_list_allows_client(client, db_session) -> None:
+    token, _ = _create_user_and_login(client, db_session, role=UserRole.CLIENT)
+    response = client.get("/api/v1/appointments", headers=_auth(token))
+    assert response.status_code == 200
+    assert response.json() == {"items": []}
+
+
+@requires_db
+def test_appointments_list_rejects_non_client(client, db_session) -> None:
+    for role in (UserRole.BARBER, UserRole.ADMIN):
         token, _ = _create_user_and_login(client, db_session, role=role)
         response = client.get("/api/v1/appointments", headers=_auth(token))
-        assert response.status_code == 501
+        assert response.status_code == 403
+
+
+@requires_db
+def test_appointments_cancel_requires_client(client, db_session) -> None:
+    for role in (UserRole.BARBER, UserRole.ADMIN):
+        token, _ = _create_user_and_login(client, db_session, role=role)
+        response = client.patch(
+            f"/api/v1/appointments/{uuid.uuid4()}/cancel",
+            headers=_auth(token),
+        )
+        assert response.status_code == 403
 
 
 @requires_db

@@ -1,11 +1,19 @@
+from datetime import datetime, timezone
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.application.appointments.cancel import CancelAppointmentCommand, CancelAppointmentUseCase
 from app.application.appointments.create import CreateAppointmentCommand, CreateAppointmentUseCase
+from app.application.appointments.list_my import ListMyAppointmentsQuery, ListMyAppointmentsUseCase
 from app.core.dependencies import get_db
-from app.core.dependencies.auth import require_authenticated, require_client
+from app.core.dependencies.auth import require_client
 from app.domain.appointments.errors import (
+    AppointmentNotCancellableError,
+    AppointmentNotFoundError,
     BarberNotAvailableError,
+    CancellationWindowExpiredError,
     PastAppointmentError,
     ServiceNotAvailableError,
     SlotNotAvailableError,
@@ -77,26 +85,81 @@ def create_appointment(
     )
 
 
-@router.get("", status_code=status.HTTP_501_NOT_IMPLEMENTED)
-def list_appointments(_: User = Depends(require_authenticated)) -> AppointmentListResponse:
-    return AppointmentListResponse(items=[])
+@router.get("", response_model=AppointmentListResponse)
+def list_appointments(
+    current_user: User = Depends(require_client),
+    db: Session = Depends(get_db),
+) -> AppointmentListResponse:
+    use_case = ListMyAppointmentsUseCase(db)
+    records = use_case.execute(
+        ListMyAppointmentsQuery(
+            user_id=current_user.id,
+            role=current_user.role,
+            now=datetime.now(timezone.utc),
+        )
+    )
+    return AppointmentListResponse(
+        items=[
+            AppointmentResponse(
+                id=record.id,
+                status=record.status,
+                scheduled_start=record.scheduled_start,
+                scheduled_end=record.scheduled_end,
+                service_id=record.service_id,
+                service_name=record.service_name,
+                barber_user_id=record.barber_user_id,
+                barber_display_name=record.barber_display_name,
+            )
+            for record in records
+        ]
+    )
 
 
-@router.patch("/{appointment_id}/cancel", status_code=status.HTTP_501_NOT_IMPLEMENTED)
+@router.patch("/{appointment_id}/cancel", response_model=AppointmentResponse)
 def cancel_appointment(
-    appointment_id: str,
-    _: User = Depends(require_client),
+    appointment_id: UUID,
+    current_user: User = Depends(require_client),
+    db: Session = Depends(get_db),
 ) -> AppointmentResponse:
-    from datetime import datetime, timezone
+    use_case = CancelAppointmentUseCase(db)
+    try:
+        result = use_case.execute(
+            CancelAppointmentCommand(
+                appointment_id=appointment_id,
+                client_user_id=current_user.id,
+                now=datetime.now(timezone.utc),
+            )
+        )
+        db.commit()
+    except AppointmentNotFoundError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cita no encontrada",
+        ) from exc
+    except CancellationWindowExpiredError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Solo puedes cancelar con al menos 2 horas de anticipación",
+        ) from exc
+    except AppointmentNotCancellableError as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La cita no se puede cancelar",
+        ) from exc
+    except Exception:
+        db.rollback()
+        raise
 
-    placeholder = datetime(1970, 1, 1, tzinfo=timezone.utc)
     return AppointmentResponse(
-        id=appointment_id,
-        status="cancelada",
-        scheduled_start=placeholder,
-        scheduled_end=placeholder,
-        service_id="00000000-0000-0000-0000-000000000000",
-        service_name="",
-        barber_user_id="00000000-0000-0000-0000-000000000000",
-        barber_display_name="",
+        id=result.id,
+        status=result.status,
+        scheduled_start=result.scheduled_start,
+        scheduled_end=result.scheduled_end,
+        service_id=result.service_id,
+        service_name=result.service_name,
+        barber_user_id=result.barber_user_id,
+        barber_display_name=result.barber_display_name,
     )

@@ -34,9 +34,11 @@ class AppointmentDetailRecord:
 class ClientAppointmentRecord:
     id: str
     status: AppointmentStatus
-    scheduled_start: object
-    scheduled_end: object
+    scheduled_start: datetime
+    scheduled_end: datetime
+    service_id: str
     service_name: str
+    barber_user_id: str
     barber_display_name: str
 
 
@@ -65,6 +67,33 @@ class AppointmentRepository:
         self._session.add(appointment)
         self._session.flush()
         return appointment
+
+    def get_by_id(self, appointment_id: uuid.UUID) -> Appointment | None:
+        return self._session.get(Appointment, appointment_id)
+
+    def cancel(self, appointment: Appointment, *, cancelled_at: datetime) -> None:
+        appointment.status = AppointmentStatus.CANCELADA
+        appointment.cancelled_at = cancelled_at
+        self._session.flush()
+
+    def to_detail_record(self, appointment: Appointment) -> AppointmentDetailRecord | None:
+        service = self._session.get(Service, appointment.service_id)
+        barber = self._session.scalar(
+            select(BarberProfile).where(BarberProfile.user_id == appointment.barber_user_id)
+        )
+        if service is None or barber is None:
+            return None
+
+        return AppointmentDetailRecord(
+            id=str(appointment.id),
+            status=appointment.status,
+            scheduled_start=appointment.scheduled_start,
+            scheduled_end=appointment.scheduled_end,
+            service_id=str(service.id),
+            service_name=service.name,
+            barber_user_id=str(appointment.barber_user_id),
+            barber_display_name=barber.display_name,
+        )
 
     def lock_blocking_for_barber_in_range(
         self,
@@ -141,7 +170,9 @@ class AppointmentRepository:
                 status=row.status,
                 scheduled_start=row.scheduled_start,
                 scheduled_end=row.scheduled_end,
+                service_id=str(row.service_id),
                 service_name=services[row.service_id].name,
+                barber_user_id=str(row.barber_user_id),
                 barber_display_name=barbers[row.barber_user_id].display_name,
             )
             for row in rows

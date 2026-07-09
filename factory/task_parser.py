@@ -46,6 +46,32 @@ def next_pending_task(path: Path) -> TaskItem | None:
     return None
 
 
+def next_in_progress_task(path: Path) -> TaskItem | None:
+    for task in load_tasks(path):
+        if task.status == TaskStatus.IN_PROGRESS:
+            return task
+    return None
+
+
+def next_actionable_task(path: Path, *, exclude: set[str] | None = None) -> TaskItem | None:
+    """Siguiente tarea pendiente o en progreso (orden TASKS.md)."""
+    skip = exclude or set()
+    for task in load_tasks(path):
+        if task.task_id in skip:
+            continue
+        if task.status in (TaskStatus.PENDING, TaskStatus.IN_PROGRESS):
+            return task
+    return None
+
+
+def list_actionable_tasks(path: Path) -> list[TaskItem]:
+    return [
+        task
+        for task in load_tasks(path)
+        if task.status in (TaskStatus.PENDING, TaskStatus.IN_PROGRESS)
+    ]
+
+
 def mark_task_status(path: Path, task_id: str, status: TaskStatus) -> bool:
     token = {
         TaskStatus.PENDING: "[ ]",

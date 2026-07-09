@@ -651,8 +651,56 @@
 | T-052 | Implementar algoritmo de generación de slots reservables | US-004, US-005 | Developer | `[x]` |
 | T-053 | Implementar creación transaccional de citas con confirmación automática | US-005 | Developer | `[x]` |
 | T-054 | Implementar pantalla Flutter de reserva de cita | US-004, US-005 | Developer | `[x]` |
-| T-055 | Implementar historial de citas del cliente | US-007 | Developer | `[ ]` |
-| T-056 | Implementar cancelación con regla de 2 horas | US-006 | Developer | `[ ]` |
+| T-055 | Implementar historial de citas del cliente | US-007 | Developer | `[x]` |
+| T-056 | Implementar cancelación con regla de 2 horas | US-006 | Developer | `[x]` |
+
+### T-056 — Notas de implementación (2026-07-08)
+
+**Estado:** Completada  
+**Historia:** US-006 — Cancelar cita
+
+**Backend (`projects/barberia-api/`):**
+- `PATCH /api/v1/appointments/{id}/cancel` operativo (reemplaza stub `501`)
+- `CancelAppointmentUseCase` con validaciones RN-07 (propiedad), RN-08 (ventana 2 h), RN-09 (estados cancelables)
+- `cancellation.py` — política de dominio `is_client_cancellable_status`, `meets_cancellation_notice`
+- `cancellation_notice_hours = 2` en `Settings` (configurable vía env)
+- `AppointmentRepository.get_by_id()` / `cancel()` — persistencia `status=cancelada`, `cancelled_at`
+- Slot liberado vía constraint EXCLUDE existente (sin borrado físico)
+- Tests: `test_cancel_appointment.py` (auth, reglas, borde 2 h, integración disponibilidad) · `test_role_guards.py` actualizado
+
+**Flutter (`projects/barberia-app/`):**
+- `CancelAppointmentUseCase` + `cancelAppointment()` en datasource/repository
+- `AppointmentSummary.canBeCancelledByClient()` — pre-check UI (2 h, estados `pendiente`/`confirmada`)
+- `AppointmentTile` — botón «Cancelar cita», diálogo confirmación, snackbar éxito, invalidate lista
+- Tests: `cancel_appointment_test.dart` (elegibilidad, DTO, widget, flujo diálogo)
+
+**Criterios SPEC cubiertos:**
+- US-006: solo mis citas `pendiente`/`confirmada` ✅ · ventana 2 h (RN-08) ✅ · slot libre ✅ · confirmación UI ✅
+
+**Validación:** `pytest` (146) ✅ · `flutter analyze` ✅ · `flutter test` (70) ✅
+
+### T-055 — Notas de implementación (2026-07-08)
+
+**Estado:** Completada  
+**Historia:** US-007 — Ver historial de citas
+
+**Backend (`projects/barberia-api/`):**
+- `GET /api/v1/appointments` operativo con `require_client` (reemplaza stub `501`)
+- `ListMyAppointmentsUseCase` + `sort_client_appointments()` — futuras primero (asc), pasadas después (desc)
+- `ClientAppointmentRecord` extendido con `service_id` y `barber_user_id`
+- Ordenamiento aplicado también en listado admin (`ListClientAppointmentsUseCase`)
+- Tests: `test_list_my_appointments.py` (auth, aislamiento, campos, orden) · `test_role_guards.py` actualizado
+
+**Flutter (`projects/barberia-app/`):**
+- Feature `appointments/` — domain/data/presentation con `AppointmentsPage` en `/appointments`
+- Secciones «Próximas» y «Pasadas» con tiles (fecha, servicio, barbero, estado)
+- Empty state + CTA reservar · loading/error con reintentar · pull-to-refresh
+- Tests: `appointment_dtos_test.dart`, `appointments_page_test.dart`
+
+**Criterios SPEC cubiertos:**
+- US-007: listado con fecha/servicio/barbero/estado ✅ · distinción futuras/pasadas ✅ · orden próximas primero ✅
+
+**Validación:** `pytest` (list + guards + create) ✅ · `flutter analyze` ✅ · `flutter test` (61) ✅
 
 ---
 

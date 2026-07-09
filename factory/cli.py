@@ -63,9 +63,31 @@ def main(argv: list[str] | None = None) -> int:
 
     p_run = sub.add_parser(
         "run",
-        help="Todo en uno: analizar (smart) + implementar + probar (fast)",
+        help="Analizar + implementar + probar (una tarea, la siguiente, o todas)",
     )
-    p_run.add_argument("task_id", help="Ej. T-051")
+    p_run.add_argument(
+        "task_id",
+        nargs="?",
+        default=None,
+        help="Ej. T-051. Sin ID: procesa todas las pendientes",
+    )
+    p_run.add_argument(
+        "--once",
+        action="store_true",
+        help="Solo la siguiente tarea (sin ID)",
+    )
+    p_run.add_argument(
+        "--max",
+        type=int,
+        default=None,
+        metavar="N",
+        help="Máximo de tareas en modo automático (sin ID)",
+    )
+    p_run.add_argument(
+        "--continue-on-error",
+        action="store_true",
+        help="No detener el autopilot si una tarea falla",
+    )
     p_run.add_argument(
         "--skip-analyze",
         action="store_true",
@@ -130,11 +152,26 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
         if args.command == "run":
-            results = orchestrator.run_full_task(
-                args.task_id,
-                mark_in_progress=not args.no_mark_progress,
-                skip_analyze=args.skip_analyze,
-            )
+            from factory.analysis_store import analysis_path as _analysis_path
+
+            if args.task_id:
+                skip = args.skip_analyze or _analysis_path(args.task_id).exists()
+                results = orchestrator.run_full_task(
+                    args.task_id,
+                    mark_in_progress=not args.no_mark_progress,
+                    skip_analyze=skip,
+                )
+            elif args.once:
+                skip_if_exists = not args.skip_analyze
+                results = orchestrator.run_next_full(
+                    skip_analyze_if_exists=skip_if_exists,
+                )
+            else:
+                results = orchestrator.run_all(
+                    max_tasks=args.max,
+                    stop_on_error=not args.continue_on_error,
+                    skip_analyze_if_exists=not args.skip_analyze,
+                )
             return _print_results(results, progress)
 
         if args.command == "analyze":
