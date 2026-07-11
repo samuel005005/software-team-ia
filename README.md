@@ -184,6 +184,14 @@ Ideal para definir SPEC, arquitectura y decisiones que requieren tu criterio.
 
 ```text
 @product_manager
+Quiero una app de barbería: el cliente reserva cita, el barbero ve agenda.
+Escribe docs/SPEC.md con US-001, US-002, criterios de aceptación y RN-01.
+```
+
+O con la plantilla de prompt:
+
+```text
+@product_manager
 Lee prompts/new_project.md. Quiero una app de [tu idea].
 Actualiza docs/SPEC.md.
 ```
@@ -210,26 +218,44 @@ Ideal para ejecutar tareas repetitivas ya definidas en `docs/TASKS.md`.
 # Ver qué falta
 python -m factory pending
 
-# Siguiente tarea: analizar → implementar → probar
-python -m factory run next
+# Siguiente tarea: analizar → implementar → probar (default)
+python -m factory run
 
 # Una tarea concreta
 python -m factory run T-001
 
 # Autopilot (todas las pendientes)
-python -m factory run
+python -m factory run all
 
-# Solo análisis (modelo smart) o solo código (modelo fast)
+# Solo implementar (carga análisis previo si existe)
+python -m factory task T-001
+
+# Análisis: una tarea o grupal por US
 python -m factory analyze T-001
-python -m factory task T-001 --use-analysis
+python -m factory analyze US-001
 
-# Roles de cierre
-python -m factory role qa
-python -m factory role reviewer
-python -m factory role security
+# Ahorro de tokens
+python -m factory run T-001 --skip-analyze    # sin fase Architect
+python -m factory --full-prompt run T-001     # prompt completo (debug)
 
-# Pipeline: N tareas dev + QA (+ review/security opcional)
-python -m factory pipeline --max-tasks 3 --review --security
+# Roles de cierre (con alcance opcional)
+python -m factory role qa --phase "Fase 1"
+python -m factory role qa --story US-001,US-002
+python -m factory role qa --tasks T-001,T-002
+
+# Release: QA + Review + Security + verificación automática
+python -m factory release --phase "Fase 1"
+python -m factory release --phase "Fase 1" --permissive
+
+# Gate: solo lee reportes (sin agentes, ideal para CI)
+python -m factory gate --require qa,reviewer,security
+python -m factory gate --phase "Fase 1" --require qa,reviewer,security
+
+# Fases definidas en TASKS.md
+python -m factory phases
+
+# Pipeline por fase (dev terminado + cierre)
+python -m factory pipeline --max-tasks 0 --phase "Fase 1" --review --security
 ```
 
 **Importante:** Cursor Desktop debe estar abierto. Si ves `Connection refused`, ábrelo y reintenta.
@@ -240,13 +266,34 @@ python -m factory pipeline --max-tasks 3 --review --security
 
 ### Paso 1 — Especificar qué construir
 
-En Cursor con `@product_manager`:
+**Archivo:** `docs/SPEC.md` (fuente de verdad del producto).
 
-- Describe usuarios, historias de usuario (US-001, US-002…) y criterios de aceptación.
-- Resultado: `docs/SPEC.md` completo.
-- **Aprueba el SPEC** antes de seguir.
+No tienes que redactar todo a mano: cuéntale la idea al PM en Cursor y **tú apruebas** el resultado.
 
-Plantilla vacía: `docs/templates/SPEC.template.md`
+```text
+@product_manager
+Quiero una app de barbería: el cliente reserva cita, el barbero ve agenda.
+Escribe docs/SPEC.md con US-001, US-002, criterios de aceptación y RN-01.
+```
+
+El PM debe dejar en `docs/SPEC.md` al menos:
+
+| Elemento | Formato | Para qué sirve |
+|----------|---------|----------------|
+| **ID** | `### US-001 — Título` | `TASKS.md` referencia `US-001` |
+| **Historia** | **Como** … **quiero** … **para** … | Contexto para Developer / QA |
+| **Criterios** | lista con `- [ ]` | El agente valida contra esto |
+| **Reglas** | `RN-01` en tabla | QA valida reglas de negocio |
+
+Alternativa por terminal:
+
+```bash
+python -m factory role product_manager --instruction "App de barbería: reservas y agenda del barbero. Escribe SPEC con US y RN."
+```
+
+- Revisa `docs/SPEC.md` cuando el agente termine.
+- **Aprueba el SPEC** antes de pasar al Architect.
+- Plantilla vacía: `docs/templates/SPEC.template.md`
 
 ### Paso 2 — Diseñar cómo construirlo
 
@@ -264,6 +311,8 @@ Formato de tarea en `TASKS.md` (el factory lo parsea):
 
 Estados: `[ ]` pendiente · `[~]` en progreso · `[x]` completada · `[!]` bloqueada
 
+Tareas simples (sin fase Architect): `[skip-analyze]` en el título o columna `Análisis: skip`.
+
 ### Paso 3 — Crear el código
 
 ```bash
@@ -279,8 +328,10 @@ Documenta las rutas en `docs/ARCHITECTURE.md` y en el README de cada proyecto.
 ### Paso 4 — Desarrollar tarea por tarea
 
 ```bash
-python -m factory run next
+python -m factory run
 ```
+
+Por defecto usa **prompts lean**, **sesión única** y reutiliza `.factory/analysis/` si existe.
 
 Cada ejecución hace:
 
@@ -288,14 +339,114 @@ Cada ejecución hace:
 2. **Crear** — implementa en `projects/`
 3. **Probar** — corre tests del stack
 4. **Cerrar** — marca `[x]` en `TASKS.md`, actualiza `CHANGELOG.md`
+5. **Auto-validación** — si completaste la **última tarea de una fase** (`## Fase …`), ejecuta solo QA + Review + Security + gate (sin comando extra)
 
-### Paso 5 — Validar y entregar
+Para desactivar el paso 5: `python -m factory run --no-auto-release` o `FACTORY_AUTO_RELEASE=0` en `.env`.
+
+### Paso 5 — Validar y entregar (manual, si hace falta)
+
+Solo si desactivaste auto-release o quieres re-validar:
 
 ```bash
-python -m factory role qa          # → docs/QA_REPORT.md
-python -m factory role reviewer    # → docs/REVIEW.md
-python -m factory role security    # → docs/SECURITY_REPORT.md
+python -m factory release --phase "Fase 1"
+python -m factory gate --phase "Fase 1" --require qa,reviewer,security
 ```
+
+---
+
+## ¿Cómo sabe el sistema que todo se cumple?
+
+No es magia: hay **tres capas de verificación** que trabajan juntas.
+
+### Capa 1 — Developer (por tarea)
+
+Cada `factory run` obliga al agente a:
+
+1. Leer criterios de aceptación de la US (desde `SPEC.md`)
+2. Implementar solo lo necesario
+3. **Ejecutar tests** (`pytest`, `flutter test`, etc.)
+4. Marcar `[x]` en `TASKS.md` solo si la Fase 3 pasa
+
+Si el agente marca `[x]` sin pruebas, QA lo detectará en el cierre.
+
+### Capa 2 — Roles de cierre (agentes + reportes)
+
+| Rol | Qué valida | Reporte | Veredicto esperado |
+|-----|------------|---------|-------------------|
+| **QA** | SPEC, criterios, RN, tests ejecutados | `docs/QA_REPORT.md` | **APROBADO** / CONDICIONAL / **RECHAZADO** |
+| **Reviewer** | Arquitectura, código, tests | `docs/REVIEW.md` | **APROBADO** / **CAMBIOS REQUERIDOS** |
+| **Security** | Auth, secretos, inputs, CVEs | `docs/SECURITY_REPORT.md` | **SEGURO** / RIESGOS / **INSEGURO** |
+
+Los agentes **deben** escribir el veredicto en la sección `## Veredicto` del reporte (formato en las rules).
+
+QA usa el prompt dedicado `prompts/qa_validate.md` y puede acotarse:
+
+```bash
+python -m factory role qa --phase "Fase 1"
+python -m factory release --story US-003
+```
+
+### Capa 3 — Factory Gate (automático, sin LLM)
+
+`factory gate` **lee los markdown** y las tareas del alcance:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  1. ¿Todas las tareas del alcance están [x]?            │
+│  2. ¿QA_REPORT.md dice **APROBADO**?                    │
+│  3. ¿REVIEW.md dice **APROBADO**? (si se exige)         │
+│  4. ¿SECURITY_REPORT.md dice **SEGURO**? (si se exige)  │
+│  5. ¿Hay bugs CRITICAL abiertos en QA?                  │
+└─────────────────────────────────────────────────────────┘
+         ↓
+   GATE ABIERTO  →  OK para merge/release
+   GATE CERRADO  →  exit code 1 (útil en CI)
+```
+
+```bash
+# Verificar sin gastar tokens
+python -m factory gate --phase "Fase 1" --require qa,reviewer,security
+
+# Modo permisivo (acepta CONDICIONAL / RIESGOS)
+python -m factory gate --permissive --require qa
+```
+
+### Fases en TASKS.md
+
+Agrupa tareas por milestone con encabezados `## Fase …`:
+
+```markdown
+## Fase 1 — Fundamentos
+
+| T-001 | Setup API | US-001 | Developer | `[x]` |
+| T-002 | Tests base | US-001 | Developer | `[x]` |
+```
+
+```bash
+python -m factory phases                              # listar fases
+python -m factory release --phase "Fase 1"            # cierre del milestone
+python -m factory gate --phase "Fase 1" --require qa  # solo esa fase
+```
+
+### Flujo de release recomendado
+
+```
+Developer:  factory run (por tarea)
+     ↓       → al marcar [x] la última tarea de una fase, auto-validación
+     ↓       → QA + Review + Security + gate (FACTORY_AUTO_RELEASE=1)
+     ↓
+Humano:     merge si GATE ABIERTO
+     ↓
+CI:         factory gate --require qa,reviewer,security
+```
+
+Desactivar auto-validación: `--no-auto-release` o `FACTORY_AUTO_RELEASE=0`.
+
+### Qué NO verifica el gate (todavía)
+
+- No ejecuta tests por sí solo (eso lo hace el agente QA o tu CI)
+- No lee cobertura de código
+- No sustituye revisión humana en SPEC ni decisiones de producto
 
 ---
 

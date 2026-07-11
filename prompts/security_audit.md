@@ -30,7 +30,7 @@ Actúa como **Security Agent**.
 3. Evalúa autenticación y autorización.
 4. Revisa dependencias conocidas con vulnerabilidades.
 5. Verifica manejo de datos sensibles y logs.
-6. Documenta en `docs/REVIEW.md` (sección Security).
+6. Documenta en `docs/SECURITY_REPORT.md`.
 7. NO modifiques código (solo reporta).
 
 ## Checklist

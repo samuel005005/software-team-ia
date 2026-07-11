@@ -55,6 +55,35 @@ def test_parse_tasks_4_columns() -> None:
     assert tasks[1].status == TaskStatus.PENDING
 
 
+SAMPLE_SKIP_TITLE = """
+| ID | Tarea | Historia | Responsable | Estado |
+|----|-------|----------|-------------|--------|
+| T-080 | [skip-analyze] Ajustar README | US-001 | Developer | `[ ]` |
+"""
+
+
+def test_parse_skip_analyze_marker_in_title() -> None:
+    tasks = parse_tasks(SAMPLE_SKIP_TITLE)
+    assert len(tasks) == 1
+    assert tasks[0].skip_analyze is True
+    assert tasks[0].title == "Ajustar README"
+    assert "[skip-analyze]" not in tasks[0].title
+
+
+SAMPLE_6COL = """
+| ID | Tarea | Historia | Responsable | Análisis | Estado |
+|----|-------|----------|-------------|----------|--------|
+| T-090 | Setup | US-002 | Developer | skip | `[ ]` |
+| T-091 | Feature | US-002 | Developer | force | `[ ]` |
+"""
+
+
+def test_parse_analyze_column() -> None:
+    tasks = parse_tasks(SAMPLE_6COL)
+    assert tasks[0].skip_analyze is True
+    assert tasks[1].force_analyze is True
+
+
 def test_next_pending_task_4_columns(tmp_path: Path) -> None:
     path = tmp_path / "TASKS.md"
     path.write_text(SAMPLE_4COL, encoding="utf-8")
@@ -68,4 +97,5 @@ def test_load_real_tasks_md_parses_placeholder() -> None:
     tasks = load_tasks(path)
     assert len(tasks) >= 1
     assert tasks[0].task_id == "T-001"
-    assert tasks[0].status == TaskStatus.PENDING
+    assert tasks[0].phase is not None
+    assert tasks[0].status in (TaskStatus.PENDING, TaskStatus.COMPLETED)

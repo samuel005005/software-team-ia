@@ -6,6 +6,7 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 - Kit Software Factory (rules, skills, orquestador `factory/`)
+- Bootstrap API `projects/mi-api/` (FastAPI, Clean Architecture, endpoint `/health`, pytest)
 
 ### Changed
 - 

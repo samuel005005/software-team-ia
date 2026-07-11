@@ -15,7 +15,7 @@
 
 | ID | Tarea | Historia | Responsable | Estado |
 |----|-------|----------|-------------|--------|
-| T-001 | Inicializar proyecto en `projects/<nombre>/` según ARCHITECTURE | — | Developer | `[ ]` |
+| T-001 | Inicializar proyecto en `projects/<nombre>/` según ARCHITECTURE | — | Developer | `[x]` |
 
 ---
 

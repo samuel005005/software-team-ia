@@ -83,4 +83,4 @@ python -m factory role security
 
 | Proyecto | Descripción | Estado |
 |----------|-------------|--------|
-| _(ninguno)_ | Añade tu primer proyecto | — |
+| `mi-api` | API FastAPI bootstrap (Clean Architecture) | Activo |

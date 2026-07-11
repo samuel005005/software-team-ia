@@ -22,8 +22,14 @@ def test_run_task_id() -> None:
     assert run_all is False
 
 
-def test_run_empty_defaults_to_all() -> None:
+def test_run_empty_defaults_to_once() -> None:
     task_id, run_once, run_all = _resolve_run_mode(None, once_flag=False)
     assert task_id is None
-    assert run_once is False
+    assert run_once is True
+    assert run_all is False
+
+
+def test_run_all_flag_via_alias() -> None:
+    task_id, run_once, run_all = _resolve_run_mode("all", once_flag=False)
     assert run_all is True
+    assert run_once is False

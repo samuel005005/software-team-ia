@@ -29,6 +29,53 @@ class TaskItem:
     owner: str
     status: TaskStatus
     line_number: int
+    skip_analyze: bool = False
+    force_analyze: bool = False
+    phase: str | None = None
+
+
+class VerdictStatus(str, Enum):
+    PASS = "pass"
+    WARN = "warn"
+    FAIL = "fail"
+    MISSING = "missing"
+
+
+@dataclass(frozen=True)
+class RoleVerdict:
+    role: str
+    status: VerdictStatus
+    verdict: str | None
+    message: str
+    open_critical: int = 0
+
+
+@dataclass(frozen=True)
+class GateResult:
+    passed: bool
+    verdicts: tuple[RoleVerdict, ...]
+    pending_tasks: tuple[str, ...]
+    scope_label: str
+    messages: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class QAScope:
+    """Alcance opcional para validación QA / release."""
+
+    phase: str | None = None
+    story_ids: tuple[str, ...] = ()
+    task_ids: tuple[str, ...] = ()
+
+    def label(self) -> str:
+        parts: list[str] = []
+        if self.phase:
+            parts.append(f"fase={self.phase}")
+        if self.story_ids:
+            parts.append("US=" + ",".join(self.story_ids))
+        if self.task_ids:
+            parts.append("tareas=" + ",".join(self.task_ids))
+        return " · ".join(parts) if parts else "proyecto completo"
 
 
 @dataclass(frozen=True)

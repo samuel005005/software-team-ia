@@ -8,6 +8,10 @@
 - `[~]` En progreso
 - `[!]` Bloqueada
 
+## Análisis (opcional)
+- Columna **Análisis**: `skip` (sin fase Architect) | `force` (siempre analizar) | vacío (auto)
+- O en el título: `[skip-analyze]` o `[simple]` para tareas triviales
+
 ---
 
 ## Fase 1 — Fundamentos

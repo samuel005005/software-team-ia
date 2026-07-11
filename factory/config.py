@@ -67,5 +67,53 @@ def model_for_role(role: FactoryRole, *, tier: ModelTier | None = None) -> str:
     return model_for_tier(resolved_tier)
 
 
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+
+def lean_prompt_enabled() -> bool:
+    """Prompts por referencia a archivos (menos tokens que inline)."""
+    return _env_bool("FACTORY_LEAN_PROMPT", True)
+
+
+def single_session_enabled() -> bool:
+    """Análisis + dev en un solo agente (reutiliza contexto)."""
+    return _env_bool("FACTORY_SINGLE_SESSION", True)
+
+
+def max_analysis_chars() -> int:
+    return _env_int("FACTORY_MAX_ANALYSIS_CHARS", 4000)
+
+
+def max_spec_chars() -> int:
+    return _env_int("FACTORY_MAX_SPEC_CHARS", 6000)
+
+
+def auto_release_enabled() -> bool:
+    """Al completar una fase, ejecutar QA + Review + Security + gate."""
+    return _env_bool("FACTORY_AUTO_RELEASE", True)
+
+
+def auto_release_include_review() -> bool:
+    return _env_bool("FACTORY_AUTO_RELEASE_REVIEW", True)
+
+
+def auto_release_include_security() -> bool:
+    return _env_bool("FACTORY_AUTO_RELEASE_SECURITY", True)
+
+
 def ensure_state_dir() -> None:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
